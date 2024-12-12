@@ -106,7 +106,7 @@ int cgmul(int r1, int r2){
 }
 
 //divide the first register by the second register and return the number of the register with the result.
-int cgdiv(int r2,int r1){
+int cgdiv(int r1,int r2){
   fprintf(Outfile,"\tmovq\t%s,%%rax\n",reglist[r1]);
   fprintf(Outfile,"\tcqo\n");//increment the stack by 8
   fprintf(Outfile,"\tidivq\t%s\n",reglist[r2]);
