@@ -1,0 +1,8 @@
+int a;
+int b;
+int c;
+int d;
+a=20+30*4;
+b=20;
+c = 30;
+print a;

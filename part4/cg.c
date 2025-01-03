@@ -3,18 +3,18 @@
 #include "decl.h"
 
 //Size 4 since we have 4 operations.
-static int freereg[4];
-static char *reglist[4] = {"%r8","%r9","%r10","%r11"};
+static int freereg[3];
+static char *reglist[3] = {"%r8","%r9","%r10"};
 
 
 //function to free all the register.
 void freeall_registers(void){
-  freereg[0]= freereg[1]= freereg[2]= freereg[3]= 1;
+  freereg[0]= freereg[1]= freereg[2]= 1;
 }
 
 //allocate a free register and return register identifier. Die if no register available.
 static int alloc_register(void){
-  for(int i=0;i<4;i++){
+  for(int i=0;i<3;i++){
     if(freereg[i]){
       freereg[i]=0;
       return i;
