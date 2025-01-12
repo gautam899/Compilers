@@ -21,10 +21,11 @@ main:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	.comm	x,8,8
-	movq	$7, %r8
-	movq	$1000, %r9
+	movq	$5, %r8
+	movq	$7, %r9
 	cmpq	%r9, %r8
 	setl	%r9b
+	andq	$255,%r9
 	movq	%r9, x(%rip)
 	movq	x(%rip), %r8
 	movq	%r8, %rdi
