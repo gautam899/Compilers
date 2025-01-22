@@ -1,0 +1,17 @@
+{
+  int i; int j;
+  i=6; j=12;
+  if (i < j) {
+    print i;
+    int k;int l;
+    k=2;l=5;
+    if(k>l){
+      print k;
+    }else{
+      print l;
+    }
+
+  } else {
+    print j;
+  }
+}
