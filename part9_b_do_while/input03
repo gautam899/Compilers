@@ -1,0 +1,15 @@
+{
+
+  int i;
+  i = 1;
+  int j;
+  j = 10;
+  do{
+    print i;
+    i = i+1;
+    while(j<=15){
+      print j;
+      j = j+1;
+    }
+  }while(i<=10);
+}
