@@ -115,10 +115,6 @@ static int keyword(char *s) {
       if (!strcmp(s,"do"))
 	return (T_DO);
       break;
-    case 'f':
-      if(!strcmp(s,"for"))
-	return T_FOR;
-      break;
   }
   return (0);
 }

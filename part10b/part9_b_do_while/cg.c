@@ -173,7 +173,7 @@ void cgjump(int l) {
 
 // List of inverted jump instructions,
 // in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
-static char *invcmplist[] = { "je", "jne", "jl", "jg", "jle", "jge" };
+static char *invcmplist[] = { "je", "jne", "jlt", "jgt", "jle", "jge" };
 
 // Compare two registers and jump if false.
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
