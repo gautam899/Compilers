@@ -119,6 +119,10 @@ static int keyword(char *s) {
       if(!strcmp(s,"for"))
 	return T_FOR;
       break;
+    case 'v':
+      if(!strcmp(s,"void"))
+	return T_VOID;	      
+      break;
   }
   return (0);
 }

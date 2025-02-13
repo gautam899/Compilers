@@ -20,3 +20,20 @@ void var_declaration(void) {
   genglobsym(Text);
   semi();
 }
+
+struct ASTnode *function_declaration(void){
+  struct ASTnode *tree;
+  int nameslot;
+
+  //Find the void, match the identifier or the function name and the empty circular parenthesis. 
+  match(T_VOID,"void");
+  ident();
+  nameslot = addglob(Text);
+  lparen();
+  rparen();
+  tree = compound_statement();
+
+  //Return the A_FUNCTION node that has the function nameslot and the compound statement subtree.
+  return mkastunary(A_FUNCTION,tree,nameslot);
+
+}
