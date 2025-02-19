@@ -172,11 +172,11 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
       else
 	return (cgcompare_and_set(n->op, leftreg, rightreg));
     case A_INTLIT:
-      return (cgloadint(n->v.intvalue));
+      return (cgloadint(n->v.intvalue,n->type));
     case A_IDENT:
-      return (cgloadglob(Gsym[n->v.id].name));
+      return (cgloadglob(n->v.id));
     case A_LVIDENT:
-      return (cgstorglob(reg, Gsym[n->v.id].name));
+      return (cgstorglob(reg, n->v.id));
     case A_ASSIGN:
       // The work has already been done, return the result
       return (rightreg);
@@ -186,6 +186,9 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
       genprintint(leftreg);
       genfreeregs();
       return (NOREG);
+    case A_WIDEN:
+      // Widen the child's type to the parent's type. One important thing to note here is that the cgloadglob has already done the widening this function will just return the register number of the value. According to the readme we do not need as this is not doing anything but it is required for some hardware paltform.
+      return (cgwiden(leftreg, n->left->type, n->type));
     default:
       fatald("Unknown AST operator", n->op);
   }
@@ -202,6 +205,6 @@ void genprintint(int reg) {
   cgprintint(reg);
 }
 
-void genglobsym(char *s) {
-  cgglobsym(s);
+void genglobsym(int id) {
+  cgglobsym(id);
 }

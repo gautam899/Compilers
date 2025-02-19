@@ -1,0 +1,14 @@
+1. We need to create primitive types. so some changes required in the defs.h file.
+2. In the tree.c file we need to have a node type for the every node. So have to add a node type in the struct ASTnode declaration in the defs.h
+3. In the sym.c we are adding some new feilds while addglob i.e when adding a variable in the global symbol table.
+4. We need to seperate out the functionalities of parsing of the types and the variable itself. So, inorder to do that we are making changes in the decl.c file. Adding a new function to parse types.
+5. Now comes the important part. 
+6. Parsing the primary terminal. Some changes in the tree.c file. We need to parse the primary factor and then return the AST node depending on it.
+7. Introduce a new types.c function to compare types of each side in mathematical expression.
+8. Added type compatibility at 3 different places. In binexp() function when we evalute we always need to make sure that both the sides are compatible.
+9. Type compatibilty in print statement.
+10. Type compatiblity to assign a variable.
+11. Some changes to the x86 code generation.  We can decide the size of memory location to store variables, and how much of a register is used to hold data. In cdglobsym, cgloadglob. 
+12. cgstorglob.
+13. Add a new function, cgwiden.
+14. In gen.c we will include a A_WIDEN.
