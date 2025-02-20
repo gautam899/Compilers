@@ -61,8 +61,15 @@ static struct ASTnode *assignment_statement(void) {
 
   // Ensure we have an identifier
   ident();
-
+   
+  // This could be a varible or a function call function call 
+  if(Token.token == T_LPAREN){
+    return funccall();
+  }
+  
+  // If not function call then it must be '=' operator.
   // Check it's been defined then make a leaf node for it
+  // *********       There needs to be a structural type test added here     **********
   if ((id = findglob(Text)) == -1) {
     fatals("Undeclared variable", Text);
   }
@@ -242,6 +249,8 @@ static struct ASTnode *single_statement(void){
 	return do_while_statement(); 
       case T_FOR:
         return for_statement();	
+      case T_RETURN:
+	return return_statement();
       default:
 	fatald("Syntax error, token", Token.token);
     }

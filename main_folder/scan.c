@@ -108,10 +108,18 @@ static int keyword(char *s) {
       if (!strcmp(s, "int"))
 	return (T_INT);
       break;
+    case 'l':
+      if(!strcmp(s,"long"))
+	return (T_LONG);
+      break;
     case 'p':
       if (!strcmp(s, "print"))
 	return (T_PRINT);
       break;
+    case 'r':
+      if (!strcmp(s, "return"))
+	return (T_RETURN)
+      break;	
     case 'w':
       if (!strcmp(s, "while"))
 	return (T_WHILE);
@@ -132,11 +140,29 @@ static int keyword(char *s) {
   return (0);
 }
 
+//A pointer to the rejected token. Why do we need this? 
+// Consider this: a = fred(5)+b and a = fred + b. We want to be able to differentiate between fred(5) and fred(). So looking ahead for the next token will help. But during this process we will loose the previous token. If I look one token ahead in fred, i will have '(' but I will end up loosing fred so we need to keep a pointer to rejected token. 
+static struct token *Rejtoken = NULL;
+
+//Reject the token that we just scanned
+void reject_token(struct token *t){
+  if(Rejtoken != NULL){
+    fatal("Can't reject a token twice");
+  }
+  Rejtoken = t;
+}
+
+
 // Scan and return the next token found in the input.
 // Return 1 if token valid, 0 if no tokens left.
 int scan(struct token *t) {
   int c, tokentype;
-
+  
+  if(Rejtoken != NULL){
+    t = Rejtoken;
+    Rejtoken = NULL;
+    return 1;
+  }
   // Skip whitespace
   c = skip();
 
