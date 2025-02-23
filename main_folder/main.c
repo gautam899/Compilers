@@ -41,7 +41,8 @@ void main(int argc, char *argv[]) {
     fprintf(stderr, "Unable to create out.s: %s\n", strerror(errno));
     exit(1);
   }
-
+  //For now, ensure that void printint() is defined
+  addglob("printint",P_CHAR,S_FUNCTION,0);
   scan(&Token);			// Get the first token from the input
   genpreamble();  // Output the preamble
   while(1){ //Parse the function.

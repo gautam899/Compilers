@@ -12,24 +12,34 @@
 // has to be widened to match the other.
 // If onlyright is true, only widen left to right.
 int type_compatible(int *left, int *right, int onlyright) {
+  int leftsize,rightsize;
 
-  // Voids not compatible with anything
-  if ((*left == P_VOID) || (*right == P_VOID))
-    return (0);
-
-  // Same types, they are compatible
+    // Same types, they are compatible
   if (*left == *right) {
     *left = *right = 0;
     return (1);
   }
 
-  // Widen P_CHARs to P_INTs as required
-  if ((*left == P_CHAR) && (*right == P_INT)) {
+  // Get the sizes for each type
+  leftsize = genprimsize(*left);
+  rightsize = genprimsize(*right);
+  
+  // Type with zero size are not compatible with anything. 
+  // Voids not compatible with anything. Type zero means the P_NONE, P_VOID.
+  if((leftsize==0) || (rightsize == 0)){
+    return 0;
+  }
+  if ((*left == P_VOID) || (*right == P_VOID))
+    return (0);
+ 
+  // Widen types as required
+  if(leftsize < rightsize){
     *left = A_WIDEN;
     *right = 0;
-    return (1);
+    return 1;
   }
-  if ((*left == P_INT) && (*right == P_CHAR)) {
+
+  if (rightsize < leftsize) {
     if (onlyright)
       return (0);
     *left = 0;

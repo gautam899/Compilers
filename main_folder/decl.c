@@ -47,8 +47,25 @@ struct ASTnode *function_declaration(void){
   type = parse_type(Token.token);
   scan(&Token);
   ident();
+  
+  // Get a label-id for the end label, add the function to the symbol table, and set the functionid global to the function's symbol-id
+  endlabel = genlabel();
+  nameslot = addglob(Text,type,S_FUNCTION, endlabel);
+  Functionid = nameslot; //Function id for a function is set every time there is function declaration.
+  //Scan the parenthesis
+  lparen();
+  rparen();
 
-  //Find the void, match the identifier or the function name and the empty circular parenthesis. 
+  // Get the ast tree for compound statement
+  tree = compound_statement();
+
+  // If the function type is not void then check that the last AST operationin the compound statement was a return statement
+  if(type != P_VOID){
+    finalstmt = (tree->op == A_GLUE) ? tree->right : tree;
+    if(finalstmt == NULL || finalstmt->op != A_RETURN){
+      fatal("No return for function with non-void type");
+    }
+  }
   
   //Return the A_FUNCTION node that has the function nameslot and the compound statement subtree.
   return mkastunary(A_FUNCTION,P_VOID,tree,nameslot);

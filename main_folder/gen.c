@@ -6,7 +6,7 @@
 // Copyright (c) 2019 Warren Toomey, GPL3
 
 // Generate and return a new label number
-static int label(void) {
+int genlabel(void) {
   static int id = 1;
   return (id++);
 }
@@ -21,9 +21,9 @@ static int genIF(struct ASTnode *n) {
   // for the end of the overall IF statement.
   // When there is no ELSE clause, Lfalse _is_
   // the ending label!
-  Lfalse = label();
+  Lfalse = genlabel();
   if (n->right)
-    Lend = label();
+    Lend = genlabel();
 
   // Generate the condition code followed
   // by a jump to the false label.
@@ -57,7 +57,7 @@ static int genIF(struct ASTnode *n) {
 static int genDO_WHILE(struct ASTnode *n){
    //In do while we will only require one label.
    int Lstart;
-   Lstart = label();
+   Lstart = genlabel();
    cglabel(Lstart);
    //The body now
    genAST(n->right,NOREG,n->op);
@@ -96,8 +96,8 @@ static int genWHILE(struct ASTnode *n) {
   //return (NOREG);
    
   int Lcomp,Lbody;
-  Lcomp = label();
-  Lbody = label();
+  Lcomp = genlabel();
+  Lbody = genlabel();
 
   cgjump(Lcomp);
   cglabel(Lbody);//body starts here
@@ -135,9 +135,9 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
       return (NOREG);
     case A_FUNCTION:
       //Generate the function preamble before the code.
-      cgfuncpreamble(Gsym[n->v.id].name);
+      cgfuncpreamble(n->v.id);
       genAST(n->left,NOREG,n->op);
-      cgfuncpostamble();
+      cgfuncpostamble(n->v.id);
       return NOREG;
   }
 
@@ -189,6 +189,12 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
     case A_WIDEN:
       // Widen the child's type to the parent's type. One important thing to note here is that the cgloadglob has already done the widening this function will just return the register number of the value. According to the readme we do not need as this is not doing anything but it is required for some hardware paltform.
       return (cgwiden(leftreg, n->left->type, n->type));
+     case A_RETURN:
+        // A_RETURN doesn't return a value as it's not an expression. 
+        cgreturn(leftreg,Functionid);
+	return NOREG;
+     case A_FUNCCALL:
+	return cgcall(leftreg,n->v.id);
     default:
       fatald("Unknown AST operator", n->op);
   }
@@ -207,4 +213,8 @@ void genprintint(int reg) {
 
 void genglobsym(int id) {
   cgglobsym(id);
+}
+
+int genprimsize(int type){
+  return cgprimsize(type);
 }

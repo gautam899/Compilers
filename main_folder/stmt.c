@@ -67,9 +67,7 @@ static struct ASTnode *assignment_statement(void) {
     return funccall();
   }
   
-  // If not function call then it must be '=' operator.
-  // Check it's been defined then make a leaf node for it
-  // *********       There needs to be a structural type test added here     **********
+  // If not function call then it must be '=' operator, so we do not have do any reject token here in this case.
   if ((id = findglob(Text)) == -1) {
     fatals("Undeclared variable", Text);
   }
@@ -231,12 +229,52 @@ static struct ASTnode* for_statement(void){
   return (mkastnode(A_GLUE,P_NONE, preopAST, NULL, tree, 0));
 }
 
+// Return statement and return its AST.
+static struct ASTnode *return_statement(void){
+  struct ASTnode *tree;
+  int returntype,functype;
+
+  // Can't return a value if function returns P_VOID
+  if(Gsym[Functionid].type == P_VOID){
+    fatal("Can't return from a void function");
+  }
+
+  // Ensure we have 'return' '('
+  match(T_RETURN, "return");
+  lparen();
+
+  // Parse the following expression
+  tree = binexpr(0);
+
+  // Ensure this is compatible with function's type
+  returntype = tree->type;
+  functype = Gsym[Functionid].type;
+
+  // Check for compatibility. Set the only right to one because we do not want to return int from a char function. 
+  if(!type_compatible(&returntype,&functype,1)){
+    fatal("Incompatible types");
+  }
+
+  // Widen the left if required. If return type is P_CHAR and the function type is P_INT then the return type requires widening. 
+  if(returntype){
+    tree = mkastunary(returntype,functype,tree,0);
+  }
+  // Add on the return node.
+  tree = mkastunary(A_RETURN,P_NONE,tree,0);
+
+  // Get the ')'
+  rparen();
+
+  return tree;
+}
+
 static struct ASTnode *single_statement(void){
   switch (Token.token) {
       case T_PRINT:
 	return print_statement();
       case T_CHAR:
       case T_INT:
+      case T_LONG:
 	var_declaration();
 	return NULL;		// No AST generated here
       case T_IDENT:
@@ -268,7 +306,7 @@ struct ASTnode *compound_statement(void) {
   while (1) {
     // Some statements must be follwed by a semicolon.
     tree = single_statement();
-    if(tree != NULL && (tree->op == A_PRINT || tree->op == A_ASSIGN)){
+    if(tree != NULL && (tree->op == A_PRINT || tree->op == A_ASSIGN || tree->op == A_RETURN || tree->op == A_FUNCCALL)){
       semi();
     }
     // For each new tree, either save it in left

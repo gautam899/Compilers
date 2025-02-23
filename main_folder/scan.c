@@ -118,7 +118,7 @@ static int keyword(char *s) {
       break;
     case 'r':
       if (!strcmp(s, "return"))
-	return (T_RETURN)
+	return (T_RETURN);
       break;	
     case 'w':
       if (!strcmp(s, "while"))

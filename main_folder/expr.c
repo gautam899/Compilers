@@ -5,12 +5,13 @@
 // Parsing of expressions
 // Copyright (c) 2019 Warren Toomey, GPL3
 
-// Parse a function icall with a single expression argument and return its AST.
+// Parse a function call with a single expression argument and return its AST. This is peice of the function when we want to parse the function call and not the function declaration itself.
 struct ASTnode *funccall(void){
   struct ASTnode *tree;
   int id;
 
-  // Check that the identifier and then make a leaf node. for it.
+  // Check that the identifier and then make a leaf node for it.
+  // In here a structural type test needs to be added to make sure that the identifier is actually a S_FUNCTION or S_VARIABLE.
   if((id = findglob(Text)) == -1){
      fatals("Undeclared function",Text);
   }
@@ -22,8 +23,7 @@ struct ASTnode *funccall(void){
   tree = binexpr(0);
 
   // Build the function call AST node. Store the functions type as this node's type.
-  // Also record the function's symbol-id
-
+  // Also record the function's symbol-id. 
   tree = mkastunary(A_FUNCCALL, Gsym[id].type,tree, id);
   //Match the right parenthesis '('
 

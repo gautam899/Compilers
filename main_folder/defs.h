@@ -18,12 +18,12 @@ enum {
   T_EQ, T_NE,
   T_LT, T_GT, T_LE, T_GE,
   //Type keywords
-  T_VOID, T_CHAR, T_INT, T_GE,
+  T_VOID, T_CHAR, T_INT, T_LONG,
   //Structural token
   T_INTLIT, T_SEMI, T_ASSIGN, T_IDENT,
   T_LBRACE, T_RBRACE, T_LPAREN, T_RPAREN,
   //Other Keywords
-  T_PRINT, T_INT, T_IF, T_ELSE, T_WHILE, T_DO,
+  T_PRINT, T_IF, T_ELSE, T_WHILE, T_DO,
   T_FOR, T_RETURN
 };
 
