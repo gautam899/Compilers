@@ -17,6 +17,7 @@ int parse_type(int t) {
   if (t == T_VOID)
     return (P_VOID);
   fatald("Illegal type, token", t);
+  return 0;
 }
 
 // declaration: 'int' identifier ';'  ;

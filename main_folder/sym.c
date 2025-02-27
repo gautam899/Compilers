@@ -5,7 +5,6 @@
 // Symbol table functions
 // Copyright (c) 2019 Warren Toomey, GPL3
 
-static int Globs = 0;		// Position of next free global symbol slot
 
 // Determine if the symbol s is in the global symbol table.
 // Return its slot position or -1 if not found.

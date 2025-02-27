@@ -8,6 +8,7 @@
 extern_ int Line;		// Current line number
 extern_ int Putback;           // Character put back by scanner
 extern_ int Functionid;         // Symbol id of the current function
+extern_ int Globs;              // Position of the next free global symbol slot.
 extern_ FILE *Infile;		// Input and output files
 extern_ FILE *Outfile;
 extern_ struct token Token;	// Last token scanned

@@ -243,7 +243,7 @@ int scan(struct token *t) {
 	scanident(c, Text, TEXTLEN);
 
 	// If it's a recognised keyword, return that token
-	if (tokentype = keyword(Text)) {
+	if ((tokentype = keyword(Text))) {
 	  t->token = tokentype;
 	  break;
 	}

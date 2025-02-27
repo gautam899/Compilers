@@ -198,6 +198,7 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
     default:
       fatald("Unknown AST operator", n->op);
   }
+  return NOREG;
 }
 
 void genpreamble() {

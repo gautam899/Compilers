@@ -86,6 +86,7 @@ static int arithop(int tokentype) {
   if (tokentype > T_EOF && tokentype < T_INTLIT)
     return (tokentype);
   fatald("Syntax error, token", tokentype);
+  return 0;
 }
 
 // Operator precedence for each token. Must
