@@ -51,7 +51,9 @@ int main(int argc, char *argv[]) {
     if(Token.token == T_EOF){ //Stop when we have reached the EOF.
        break;
     }
+  
   }
+  genpostamble();
   fclose(Outfile);		// Close the output file and exit
   exit(0);
 }

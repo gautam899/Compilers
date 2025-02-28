@@ -1,6 +1,3 @@
-void printint() {
-  printf("%ld\n", x);
-}
 int fred(){
   return (20);
 }
@@ -12,4 +9,8 @@ void main(){
   printint(result);
   printint(fred(15)+10);
   
+}
+#include <stdio.h>
+void printint(long x) {
+  printf("%ld\n", x);
 }
