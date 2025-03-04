@@ -273,7 +273,7 @@ int cgcompare_and_set(int ASTop, int r1, int r2) {
   fprintf(Outfile, "\tcmp\t%s, %s\n", reglist[r1], reglist[r2]);
   fprintf(Outfile, "\t%s\t%s, #1\n", cmplist[ASTop - A_EQ], reglist[r2]);
   fprintf(Outfile, "\t%s\t%s, #0\n", invcmplist[ASTop - A_EQ], reglist[r2]);
-  fprintf(Outfile, "\tuxtb\t%s, %s\n", reglist[r2], reglist[r2]);
+  fprintf(Outfile, "\tAND\t%s, %s, #0xFF\n", reglist[r2], reglist[r2]);
   free_register(r1);
   return (r2);
 }
@@ -290,7 +290,7 @@ void cgjump(int l) {
 
 // List of inverted branch instructions,
 // in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
-static char *brlist[] = { "bne", "beq", "bge", "ble", "bgt", "blt" };
+static char *brlist[] = { "be", "bne", "blt", "bgt", "ble", "bge" };
 
 // Compare two registers and jump if false.
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {

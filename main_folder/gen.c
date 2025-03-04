@@ -14,6 +14,7 @@ int genlabel(void) {
 // Generate the code for an IF statement
 // and an optional ELSE clause
 static int genIF(struct ASTnode *n) {
+  /***
   int Lfalse, Lend;
 
   // Generate two labels: one for the
@@ -28,6 +29,7 @@ static int genIF(struct ASTnode *n) {
   // Generate the condition code followed
   // by a jump to the false label.
   // We cheat by sending the Lfalse label as a register.
+  
   genAST(n->left, Lfalse, n->op);
   genfreeregs();
 
@@ -51,7 +53,32 @@ static int genIF(struct ASTnode *n) {
     genfreeregs();
     cglabel(Lend);
   }
+  ***/
+  //To make it work like gob bolt we need to change the positions of the statement.
+  
+  //Jump to the comparisions
+  int Lif,Lend;
+  Lif = genlabel();
+  //If if we do not have a else clause we will need a LEND.
+  Lend = genlabel();
 
+  //Generate the assembly code for the condition. If true jump to the Lif part of the code.
+  genAST(n->left, Lif, n->op);
+  genfreeregs();
+  
+  //If we have a else clause
+  if(n->right){
+    genAST(n->right, NOREG, n->op);
+    genfreeregs();
+  }
+  cgjump(Lend);
+  
+  cglabel(Lif);
+  // Now generate the assembly for true part or if part of the code
+  genAST(n->mid, NOREG, n->op);
+  genfreeregs();
+
+  cglabel(Lend);
   return (NOREG);
 }
 static int genDO_WHILE(struct ASTnode *n){

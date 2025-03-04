@@ -28,6 +28,7 @@ static int alloc_register(void) {
     }
   }
   fatal("Out of registers");
+  return(NOREG);	// Keep -Wall happy
 }
 
 // Return a register to the list of available registers.
@@ -42,6 +43,10 @@ static void free_register(int reg) {
 void cgpreamble() {
   freeall_registers();
   fputs("\t.text\n", Outfile);
+}
+
+// Nothing to do
+void cgpostamble() {
 }
 
 // Print out a function preamble

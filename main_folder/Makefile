@@ -24,7 +24,7 @@ test: comp1 tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
 armtest: comp1arm tests/runtests
-	(cd tests; chmod +x runtests; ./runtests)
+	(cd tests; chmod +x runtests; ./runtestsarm)
 
 testn: compn tests/runtestsn
 	(cd tests; chmod +x runtestsn; ./runtestsn)

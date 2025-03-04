@@ -1,0 +1,1 @@
+1. My does out file do not get generated properly?. The assembly is not handled properly. 

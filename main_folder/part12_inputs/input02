@@ -1,5 +1,0 @@
-void main(){
-  char i;
-  i = 255;
-  print i;
-}
