@@ -8,7 +8,7 @@ int main() {
   int   f;
 
   a= 18; printint(a);
-  b= &a; c= *b; printint(c);
+  b= &&a; c= *b; printint(c);
 
   d= 12; printint(d);
   e= &d; f= *e; printint(f);

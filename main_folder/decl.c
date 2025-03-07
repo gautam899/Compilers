@@ -62,7 +62,7 @@ struct ASTnode *function_declaration(void){
 
     
   // Get the type of the variable, then the identifier
-  type = parse_type(Token.token);
+  type = parse_type();
   ident();
   
   // Get a label-id for the end label, add the function to the symbol table, and set the functionid global to the function's symbol-id
@@ -81,7 +81,7 @@ struct ASTnode *function_declaration(void){
   { 
     // Error if no statements in the function
     if (tree == NULL)
-      fatal("No statements in function with non-void type")
+      fatal("No statements in function with non-void type");
     finalstmt = (tree->op == A_GLUE) ? tree->right : tree;
     if(finalstmt == NULL || finalstmt->op != A_RETURN){
       fatal("No return for function with non-void type");
