@@ -1,0 +1,10 @@
+int fred() {
+  return(5);
+}
+
+int main() {
+  int x;
+  x= 100 + fred(2);
+  print x;
+  return (0);
+}
