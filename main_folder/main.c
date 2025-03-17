@@ -23,9 +23,7 @@ static void usage(char *prog) {
 // Main program: check arguments and print a usage
 // if we don't have an argument. Open up the input
 // file and call scanfile() to scan the tokens in it.
-int main(int argc, char *argv[]) {
-  struct ASTnode *tree;
-
+int main(int argc, char *argv[]) {  
   if (argc != 2)
     usage(argv[0]);
 
@@ -45,14 +43,7 @@ int main(int argc, char *argv[]) {
   addglob("printint",P_CHAR,S_FUNCTION,0);
   scan(&Token);			// Get the first token from the input
   genpreamble();  // Output the preamble
-  while(1){ //Parse the function.
-    tree = function_declaration();
-    genAST(tree,NOREG,0);
-    if(Token.token == T_EOF){ //Stop when we have reached the EOF.
-       break;
-    }
-  
-  }
+  global_declarations();  //Parse the global decl. In this part everthing is a global declaration.
   genpostamble();
   fclose(Outfile);		// Close the output file and exit
   exit(0);

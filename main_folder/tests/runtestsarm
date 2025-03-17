@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# Run each test and compare against known good output
 
 if [ ! -f ../comp1arm ]  # Corrected check for complarm
 then echo "Need to build ../complarm first!"; exit 1

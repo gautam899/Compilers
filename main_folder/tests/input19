@@ -1,0 +1,11 @@
+int a;
+int b,c,d;
+
+int main(){
+ a = 10;
+ b = 5;
+ c = 3;
+ d = a + b + c;
+ printint(d);
+ return (0);
+}

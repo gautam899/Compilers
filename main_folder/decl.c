@@ -5,6 +5,28 @@
 // Parsing of declarations
 // Copyright (c) 2019 Warren Toomey, GPL3
 
+
+
+// global_declarations : global_declarations
+//      | global_declaration global_declarations
+//      ;
+//
+// global_declaration: function_declaration | var_declaration ;
+//
+// function_declaration: type identifier '(' ')' compound_statement   ;
+//
+// var_declaration: type identifier_list ';'  ;
+//
+// type: type_keyword opt_pointer  ;
+//
+// type_keyword: 'void' | 'char' | 'int' | 'long'  ;
+//
+// opt_pointer: <empty> | '*' opt_pointer  ;
+//
+// identifier_list: identifier | identifier ',' identifier_list ;
+//
+
+
 // Parse the current token and
 // return a primitive type enum value. 
 // Also scan in the next token.
@@ -41,30 +63,43 @@ int parse_type(void) {
 }
 
 // Parse the declaration of a variable
-void var_declaration(void) {
-  int id,type;
-  //Get the type of the variable which also scan the identifier.
-  type = parse_type();
-  ident();
-  // Text now has the identifier's name.
-  // Add it as a known identifier
-  // and generate its space in assembly
-  id = addglob(Text, type, S_VARIABLE,0);
-  genglobsym(id);
-  // Get the trailing semicolon
-  semi();
+// variable_declaration: type identifier ';';
+// Parse the declaration of list of variables.
+// In this part var_declaration need a pre-calculated variable and its type.
+void var_declaration(int type) {
+  int id;
   
+  while(1){
+    // Text now has the identifier's name. Add it as a known identifier.
+    // Add it as known idenifier.
+    // and generate its space in assembly.
+    id = addglob(Text,type,S_VARIABLE,0);
+    genglobsym(id);
+
+    //Now there can be two things happening here. Either the next token can be a semicolon or a comma.
+    if(Token.token == T_SEMI){
+      scan(&Token);
+      return;
+    }
+
+    //If the next token is a comma then skip the comma, calculate the next token and loop back
+    if(Token.token == T_COMMA){
+      scan(&Token);
+      ident();
+      continue;
+    }
+    
+    // If neither a comma nor a semicolon then something is missing.
+    fatal("Missing , or ; after the identifier");
+  }
 }
 
-struct ASTnode *function_declaration(void){
+// This time when the function_declaration gets called from global_declation we already have the identifier and its type scanned
+struct ASTnode *function_declaration(int type){
   struct ASTnode *tree,*finalstmt;
-  int nameslot, type, endlabel;
+  int nameslot, endlabel;
 
-    
-  // Get the type of the variable, then the identifier
-  type = parse_type();
-  ident();
-  
+  // Text now has the identifier's name
   // Get a label-id for the end label, add the function to the symbol table, and set the functionid global to the function's symbol-id
   endlabel = genlabel();
   nameslot = addglob(Text,type,S_FUNCTION, endlabel);
@@ -91,4 +126,28 @@ struct ASTnode *function_declaration(void){
   //Return the A_FUNCTION node that has the function nameslot and the compound statement subtree.
   return mkastunary(A_FUNCTION,P_VOID,tree,nameslot);
 
+}
+
+// Parse one or more global declarations, either variables or functions.
+void global_declarations(void){
+  struct ASTnode *tree;
+  int type;
+
+  while(1){
+    // We need to read past the type and identifier to check if its a variable declaration or a function declaration. 
+    type = parse_type();//This will parse the type and calcualte the next token as well. 
+    ident(); //This will calculate one further token next to the identifier.
+
+    if(Token.token == T_LPAREN){
+      //Parse the function declaration and generate the assembly code for it.
+      tree = function_declaration(type);
+      genAST(tree, NOREG, 0);
+    }else{
+      var_declaration(type);
+    }
+
+    if(Token.token == T_EOF){
+      break;
+    }
+  }
 }

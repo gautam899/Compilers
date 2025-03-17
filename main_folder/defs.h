@@ -36,7 +36,8 @@ enum {
   T_LPAREN, 
   T_RPAREN,
   T_AMPER, 
-  T_LOGAND,//Other Keywords
+  T_LOGAND,
+  T_COMMA,//Other Keywords  
   T_PRINT, 
   T_IF, 
   T_ELSE, 

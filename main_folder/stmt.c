@@ -268,13 +268,16 @@ static struct ASTnode *return_statement(void){
 }
 
 static struct ASTnode *single_statement(void){
+  int type;
   switch (Token.token) {
       case T_PRINT:
 	return print_statement();
       case T_CHAR:
       case T_INT:
       case T_LONG:
-	var_declaration();
+	type = parse_type();
+	ident();
+	var_declaration(type);
 	return NULL;		// No AST generated here
       case T_IDENT:
 	return assignment_statement();
@@ -291,7 +294,7 @@ static struct ASTnode *single_statement(void){
       default:
 	fatald("Syntax error, token", Token.token);
     }
-  return NULL;
+  return (NULL);
 
 }
 // Parse a compound statement
