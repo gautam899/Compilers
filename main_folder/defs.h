@@ -81,7 +81,8 @@ enum {
   A_RETURN,
   A_FUNCCALL,
   A_DEREF, 
-  A_ADDR
+  A_ADDR,
+  A_SCALE
 };
 
 //Some primitive types
@@ -105,7 +106,8 @@ struct ASTnode {
   struct ASTnode *right;
   union {
     int intvalue;		// For A_INTLIT, the integer value
-    int id;			// For A_IDENT, the symbol slot number
+    int id;    // For A_IDENT, the symbol slot number
+    int size;
   } v;
 };
 

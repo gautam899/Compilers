@@ -156,8 +156,9 @@ struct ASTnode *prefix(void) {
 // Parameter ptp is the previous token's precedence.
 struct ASTnode *binexpr(int ptp) {
   struct ASTnode *left, *right;
+  struct ASTnode *ltemp, *rtemp;
+  int ASTop;
   int tokentype;
-  int lefttype,righttype;
   // Get the primary tree on the left.
   // Fetch the next token at the same time.
   left = prefix();
@@ -177,17 +178,23 @@ struct ASTnode *binexpr(int ptp) {
     // precedence of our token to build a sub-tree
     right = binexpr(OpPrec[tokentype]);
 
-    lefttype = left->type;
-    righttype = right->type;
-    if (!type_compatible(&lefttype, &righttype, 0))
-      fatal("Incompatible types");
+    // Here when we do modify type we need to combine two tree with a binary operation like addition, multiplication, etc. We are here trying to modify each tree with other tree's type. Now one may widen; but this also means that the other will fail and return NULL. So, we can't see the result of modify type from one tree but we rather need to consider both the tree, and only if both the modify_type results are NULL, only then we can say they are type incompatible.
+    ASTop = arithop(tokentype);
+    ltemp = modify_type(left,right->type,ASTop);
+    rtemp = modify_type(right,left->type,ASTop);
 
-    // Widen either side if required. type vars are A_WIDEN now
-    if (lefttype)
-      left = mkastunary(lefttype, right->type, left, 0);
-    if (righttype)
-      right = mkastunary(righttype, left->type, right, 0);
+    if(ltemp == NULL && rtemp == NULL){
+      // Incompatible types
+      fatal("Incompatible types in binary expression");
+    }
 
+    // Update any tree that were widened or scaled
+    if(ltemp != NULL){
+      left = ltemp;
+    }
+    if(rtemp != NULL){
+      right = rtemp;
+    }
     // Join that sub-tree with ours. Convert the token
     // into an AST operation at the same time.
     left = mkastnode(arithop(tokentype),left->type, left, NULL, right, 0);

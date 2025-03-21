@@ -24,24 +24,18 @@ static struct ASTnode *single_statement(void);
 
 static struct ASTnode *print_statement(void) {
   struct ASTnode *tree;
-  int lefttype,righttype;
 
   // Match a 'print' as the first token
   match(T_PRINT, "print");
 
   // Parse the following expression
   tree = binexpr(0);
-
-  // Make an print AST tree
-  // Ensure the two types are compatible.
-  lefttype = P_INT;
-  righttype = tree->type;
-  if (!type_compatible(&lefttype, &righttype, 0))
-    fatal("Incompatible types");
-
-  // Widen the tree if required. 
-  if (righttype)
-    tree = mkastunary(righttype, P_INT, tree, 0);
+  
+  // Ensure if two types are compatible.
+  tree = modify_type(tree,P_INT,0);
+  if(tree == NULL){
+      fatal("Incompatible type to print");
+  }
 
   // Make an print AST tree
   tree = mkastunary(A_PRINT, P_NONE, tree, 0);
@@ -55,7 +49,6 @@ static struct ASTnode *print_statement(void) {
 //
 static struct ASTnode *assignment_statement(void) {
   struct ASTnode *left, *right, *tree;
-  int lefttype,righttype;
   int id;
 
   // Ensure we have an identifier
@@ -78,16 +71,11 @@ static struct ASTnode *assignment_statement(void) {
   // Parse the following expression
   left = binexpr(0);
 
-  // Ensure the two types are compatible.
-  lefttype = left->type;
-  righttype = right->type;
-  if (!type_compatible(&lefttype, &righttype, 1))
-    fatal("Incompatible types");
-
-  // Widen the left if required.
-  if (lefttype)
-    left = mkastunary(lefttype, right->type, left, 0);
-
+  // Ensure that the two types are compatible.
+  left = modify_type(left,right->type,0);
+  if (left == NULL){
+     fatal("Incompatible expression in assignment");
+  }
   // Make an assignment AST tree
   tree = mkastnode(A_ASSIGN, P_INT, left, NULL, right, 0);
 
@@ -231,7 +219,6 @@ static struct ASTnode* for_statement(void){
 // Return statement and return its AST.
 static struct ASTnode *return_statement(void){
   struct ASTnode *tree;
-  int returntype,functype;
 
   // Can't return a value if function returns P_VOID
   if(Gsym[Functionid].type == P_VOID){
@@ -245,18 +232,10 @@ static struct ASTnode *return_statement(void){
   // Parse the following expression
   tree = binexpr(0);
 
-  // Ensure this is compatible with function's type
-  returntype = tree->type;
-  functype = Gsym[Functionid].type;
-
-  // Check for compatibility. Set the only right to one because we do not want to return int from a char function. 
-  if(!type_compatible(&returntype,&functype,1)){
-    fatal("Incompatible types");
-  }
-
-  // Widen the left if required. If return type is P_CHAR and the function type is P_INT then the return type requires widening. 
-  if(returntype){
-    tree = mkastunary(returntype,functype,tree,0);
+  // Ensure this is compatible with the function's type.
+  tree = modify_type(tree,Gsym[Functionid].type,0);
+  if(tree == NULL){
+    fatal("Return type incompatible to function type");
   }
   // Add on the return node.
   tree = mkastunary(A_RETURN,P_NONE,tree,0);
@@ -315,7 +294,7 @@ struct ASTnode *compound_statement(void) {
     // For each new tree, either save it in left
     // if left is empty, or glue the left and the
     // new tree together
-    if (tree) {
+    if (tree!=NULL) {
       if (left == NULL)
 	left = tree;
       else
