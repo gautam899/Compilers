@@ -94,7 +94,7 @@ static int scanident(int c, char *buf, int lim) {
 static int keyword(char *s) {
   switch (*s) 
   {
-	  case 'c':
+    case 'c':
       if (!strcmp(s, "char"))
 	return (T_CHAR);
       break;
@@ -111,10 +111,6 @@ static int keyword(char *s) {
     case 'l':
       if(!strcmp(s,"long"))
 	return (T_LONG);
-      break;
-    case 'p':
-      if (!strcmp(s, "print"))
-	return (T_PRINT);
       break;
     case 'r':
       if (!strcmp(s, "return"))
@@ -199,9 +195,6 @@ int scan(struct token *t) {
     case ')':
       t->token = T_RPAREN;
       break;
-    case ',': 
-      t->token = T_COMMA;
-      break;
     case '=':
       if ((c = next()) == '=') {
 	t->token = T_EQ;
@@ -254,7 +247,7 @@ int scan(struct token *t) {
 	scanident(c, Text, TEXTLEN);
 
 	// If it's a recognised keyword, return that token
-	if ((tokentype = keyword(Text))) {
+	if ((tokentype = keyword(Text)) != 0) {
 	  t->token = tokentype;
 	  break;
 	}

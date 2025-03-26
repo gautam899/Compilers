@@ -13,6 +13,7 @@
 // If token is n we can look up 15+n.
 enum {
   T_EOF, //Operators
+  T_ASSIGN,
   T_PLUS, 
   T_MINUS,
   T_STAR,
@@ -28,8 +29,7 @@ enum {
   T_INT, 
   T_LONG,//Structural token
   T_INTLIT, 
-  T_SEMI, 
-  T_ASSIGN, 
+  T_SEMI,  
   T_IDENT,
   T_LBRACE, 
   T_RBRACE, 
@@ -37,7 +37,6 @@ enum {
   T_RPAREN,
   T_AMPER, 
   T_LOGAND,
-  T_COMMA,//Other Keywords  
   T_PRINT, 
   T_IF, 
   T_ELSE, 
@@ -57,7 +56,8 @@ struct token {
 // with the related tokens
 // If the token n then we can look it up at 59+n-1;
 enum {
-  A_ADD = 1,
+  A_ASSIGN = 1,
+  A_ADD,
   A_SUBTRACT, 
   A_MULTIPLY, 
   A_DIVIDE,
@@ -68,10 +68,7 @@ enum {
   A_LE, 
   A_GE,
   A_INTLIT,
-  A_IDENT, 
-  A_LVIDENT,
-  A_ASSIGN, 
-  A_PRINT, 
+  A_IDENT,  
   A_GLUE,
   A_IF, 
   A_WHILE,
@@ -84,7 +81,6 @@ enum {
   A_ADDR,
   A_SCALE
 };
-edition = "2024"
 
 //Some primitive types
 enum {
@@ -102,6 +98,7 @@ enum {
 struct ASTnode {
   int op;			// "Operation" to be performed on this tree
   int type;
+  int rvalue;
   struct ASTnode *left;		// Left, middle and right child trees
   struct ASTnode *mid;
   struct ASTnode *right;
@@ -113,6 +110,9 @@ struct ASTnode {
 };
 
 #define NOREG	-1		// Use NOREG when the AST generation
+                                // functions have no register to return
+#define NOLABEL 0               // Use NOLABEL when we have no label to
+				// pass to genAST()
 // Structural types
 enum {
   S_VARIABLE, S_FUNCTION

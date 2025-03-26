@@ -12,6 +12,7 @@ struct ASTnode *mkastnode(int op,int type, struct ASTnode *left,
 struct ASTnode *mkastleaf(int op,int type, int intvalue);
 struct ASTnode *mkastunary(int op,int type, struct ASTnode *left, int intvalue);
 
+void dumpAST(struct ASTnode *n,int label,int parentASTop);
 // gen.c
 int genlabel(void);
 int genAST(struct ASTnode *n, int reg, int parentASTop);
@@ -49,6 +50,7 @@ int cgprimsize(int type);
 void cgreturn(int reg,int id);
 int cgaddress(int id);
 int cgderef(int r, int type);
+int cgstorderef(int r1, int r2, int type);
 
 // expr.c
 struct ASTnode *funccall(void);

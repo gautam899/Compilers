@@ -3,7 +3,7 @@ int main(){
    i = 0;
    do{
      i = i + 1;
-     print i;
+     printint(i);
    }while(i<10);
    return (0);
 }

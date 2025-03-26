@@ -201,18 +201,21 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
     case A_INTLIT:
       return (cgloadint(n->v.intvalue,n->type));
     case A_IDENT:
+      // Load our values if we are a rvalue or we are being dereferenced.
+      if(n->rvalue || parentASTop == A_DEREF){
+        return (cgloadglob(n->v.id));
+      }
+      else{
+        return NOREG;//If we are Lvalue then the work has already been done. So, no action needs to be taken.
+      }
       return (cgloadglob(n->v.id));
-    case A_LVIDENT:
-      return (cgstorglob(reg, n->v.id));
     case A_ASSIGN:
-      // The work has already been done, return the result
-      return (rightreg);
-    case A_PRINT:
-      // Print the left-child's value
-      // and return no register
-      genprintint(leftreg);
-      genfreeregs();
-      return (NOREG);
+      // Are we assigning to an identifier or through a pointer.
+      switch (n->right->op){
+         case A_IDENT: return (cgstorglob(leftreg, n->right->v.id));
+         case A_DEREF: return (cgstorderef(leftreg,rightreg,n->right->type));
+	 default: fatald("Can't A_ASSIGN in genAST(), op",n->op);
+      }
     case A_WIDEN:
       // Widen the child's type to the parent's type. One important thing to note here is that the cgloadglob has already done the widening this function will just return the register number of the value. According to the readme we do not need as this is not doing anything but it is required for some hardware paltform.
       return (cgwiden(leftreg, n->left->type, n->type));
@@ -225,6 +228,14 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
      case A_ADDR:
         return (cgaddress(n->v.id));
      case A_DEREF:
+        // If we are an rvalue, dereference to get the value we point at,
+	// Otherwise leave it for A_ASSIGN to store through the pointer.
+	if (n->rvalue){
+	   return cgderef(leftreg,n->left->type);
+	}
+	else{
+	   return leftreg;
+	}
         return (cgderef(leftreg, n->left->type));
      case A_SCALE:
 	switch (n->v.size){

@@ -4,5 +4,5 @@ void main()
   int jim;
   fred= 5;
   jim= 12;
-  print fred + jim;
+  printint(fred + jim);
 }

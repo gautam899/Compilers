@@ -182,7 +182,7 @@ int cgstorglob(int r, int id) {
 }
 // Array of type sizes in P_XXX order.
 // 0 means no size.
-static int psize[] = { 0, 0, 1, 4, 8,8,8,8 };
+static int psize[] = { 0, 0, 1, 4, 8, 8, 8, 8, 8};
 
 // Given a P_XXX type value, return the
 // size of a primitive type in bytes.
@@ -199,7 +199,13 @@ void cgglobsym(int id) {
   // Get the size of the type
   typesize = cgprimsize(Gsym[id].type);
 
-  fprintf(Outfile, "\t.comm\t%s,%d,%d\n", Gsym[id].name, typesize, typesize);
+  fprintf(Outfile, "\t.data\n" "\t.globl\t%s\n", Gsym[id].name);
+  switch(typesize) {
+    case 1: fprintf(Outfile, "%s:\t.byte\t0\n", Gsym[id].name); break;
+    case 4: fprintf(Outfile, "%s:\t.long\t0\n", Gsym[id].name); break;
+    case 8: fprintf(Outfile, "%s:\t.quad\t0\n", Gsym[id].name); break;
+    default: fatald("Unknown typesize in cgglobsym: ", typesize);
+  }
 }
 
 // List of comparison instructions,
@@ -297,6 +303,28 @@ int cgderef(int r, int type) {
     case P_LONGPTR:
       fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
       break;
+    default:
+      fatald("Can't cgderef on type:",type); 
   }
   return (r);
 }
+
+// Store through a dereferenced pointer
+int cgstorderef(int r1, int r2, int type) {
+  switch (type) {
+    case P_CHAR:
+      fprintf(Outfile, "\tmovb\t%s, (%s)\n", breglist[r1], reglist[r2]);
+      break;
+    case P_INT:
+      fprintf(Outfile, "\tmovq\t%s, (%s)\n", reglist[r1], reglist[r2]);
+      break;
+    case P_LONG:
+      fprintf(Outfile, "\tmovq\t%s, (%s)\n", reglist[r1], reglist[r2]);
+      break;
+    default:
+      fatald("Can't cgstoderef on type:", type);
+  }
+  return (r1);
+}
+
+

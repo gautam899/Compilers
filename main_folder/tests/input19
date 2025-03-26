@@ -1,5 +1,7 @@
 int a;
-int b,c,d;
+int b;
+int c;
+int d;
 
 int main(){
  a = 10;
