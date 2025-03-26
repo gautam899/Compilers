@@ -84,7 +84,6 @@ enum {
   A_ADDR,
   A_SCALE
 };
-edition = "2024"
 
 //Some primitive types
 enum {
