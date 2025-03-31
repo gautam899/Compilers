@@ -1,8 +1,8 @@
 int main()
 {
-  int a;
-  int b;
-  a= b= 34;
+  char a;
+  char b;
+  a= b= 27;
   printint (a);
   printint (b);
   return (0);

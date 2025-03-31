@@ -1,4 +1,3 @@
-set -x
 #!/bin/sh
 # Run each test and compare
 # against known good output

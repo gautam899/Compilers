@@ -24,13 +24,26 @@ static void usage(char *prog) {
 // if we don't have an argument. Open up the input
 // file and call scanfile() to scan the tokens in it.
 int main(int argc, char *argv[]) {  
-  if (argc != 2)
-    usage(argv[0]);
+  int i;
 
   init();
+   // Scan for command-line options
+  for (i=1; i<argc; i++) {
+    if (*argv[i] != '-') break;
+    for (int j=1; argv[i][j]; j++) {
+      switch (argv[i][j]) {
+	case 'T': O_dumpAST =1; break;
+	default: usage(argv[0]);
+      }
+    }
+  }
+
+  // Ensure we have an input file argument
+  if (i >= argc)
+    usage(argv[0]);
 
   // Open up the input file
-  if ((Infile = fopen(argv[1], "r")) == NULL) {
+  if ((Infile = fopen(argv[i], "r")) == NULL) {
     fprintf(stderr, "Unable to open %s: %s\n", argv[1], strerror(errno));
     exit(1);
   }

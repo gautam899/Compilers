@@ -91,7 +91,7 @@ int cgloadglob(int id) {
       break;
     case P_INT:
       fprintf(Outfile, "\tmovzbl\t%s(\%%rip), %s\n", Gsym[id].name,
-	      reglist[r]);
+	      dreglist[r]);
       break;
     case P_LONG:
     case P_CHARPTR:
@@ -156,6 +156,12 @@ int cgcall(int r, int id) {
   fprintf(Outfile, "\tmovq\t%%rax, %s\n", reglist[outr]);
   free_register(r);
   return (outr);
+}
+
+// Shift a register left by a constant
+int cgshlconst(int r, int val) {
+  fprintf(Outfile, "\tsalq\t$%d, %s\n", val, reglist[r]);
+  return(r);
 }
 
 // Store a register's value into a variable
@@ -239,7 +245,7 @@ void cgjump(int l) {
 
 // List of inverted jump instructions,
 // in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
-static char *invcmplist[] = { "je", "jne", "jlt", "jgt", "jle", "jge" };
+static char *invcmplist[] = { "je", "jne", "jl", "jgt", "jle", "jge" };
 
 // Compare two registers and jump if false.
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
