@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   //For now, ensure that void printint() is defined
-  addglob("printint",P_CHAR,S_FUNCTION,0);
+  addglob("printint",P_CHAR,S_FUNCTION,0, 0);
   scan(&Token);			// Get the first token from the input
   genpreamble();  // Output the preamble
   global_declarations();  //Parse the global decl. In this part everthing is a global declaration.

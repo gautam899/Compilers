@@ -74,7 +74,7 @@ void fatalc(char *s, int c);
 
 // sym.c
 int findglob(char *s);
-int addglob(char *name,int type,int stype,int endlabel);//The endlabel part is for a function
+int addglob(char *name,int type,int stype,int endlabel,int size);//The endlabel part is for a function
 
 // decl.c
 void var_declaration(int type);
@@ -82,6 +82,7 @@ struct ASTnode *function_declaration(int type);
 void global_declarations(void);
 
 //types.c
+int inttype(int type);
 int parse_type(void);
 int type_compatible(int *left,int *right,int onlyright);
 int pointer_to(int type);

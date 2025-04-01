@@ -41,18 +41,36 @@ int parse_type(void) {
   return (type);
 }
 
-// variable_declaration: type identifier ';'  ;
-//
-// Parse the declaration of a variable.
+// variable_declaration: type identifier ';'
+// | type identifier '[' INTLIT ']' ';'
+// ;
+// Parse the declaration of a scaler variable or an array
+// with a given size
 // The identifier has been scanned & we have the type
 void var_declaration(int type) {
   int id;
 
   // Text now has the identifier's name.
-  // Add it as a known identifier
-  // and generate its space in assembly
-  id = addglob(Text, type, S_VARIABLE, 0);
-  genglobsym(id);
+  // Check if the next token is a '[', if yes then it is a array declaration
+  if (Token.token == T_LBRACKET){
+     // Skip past the '['
+     scan(&Token);
+     // Check if we have array size
+     if (Token.token == T_INTLIT){
+       // Add this as an know array and generate its space in the assembly. We treat the array as an pointer to its elements's type.
+       id = addglob(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue);
+       genglobsym(id);
+     }
+
+     // Ensure that we have a following ']'
+     scan(&Token);
+     match(T_RBRACKET, "]");
+  }else{
+     //It is a simple identifier.
+     id = addglob(Text, type, S_VARIABLE, 0, 1);
+     genglobsym(id);
+  }
+
   // Get the trailing semicolon
   semi();
 }
@@ -71,7 +89,7 @@ struct ASTnode *function_declaration(int type) {
   // to the symbol table, and set the Functionid global
   // to the function's symbol-id
   endlabel = genlabel();
-  nameslot = addglob(Text, type, S_FUNCTION, endlabel);
+  nameslot = addglob(Text, type, S_FUNCTION, endlabel, 0);
   Functionid = nameslot;
 
   // Scan in the parentheses

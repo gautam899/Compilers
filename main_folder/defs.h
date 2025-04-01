@@ -12,7 +12,7 @@
 // Token types
 // If token is n we can look up 15+n.
 enum {
-  T_EOF, //Operators
+  T_EOF, // Operator s
   T_ASSIGN,
   T_PLUS, 
   T_MINUS,
@@ -23,11 +23,11 @@ enum {
   T_LT, 
   T_GT, 
   T_LE, 
-  T_GE, //Type keywords
+  T_GE, // Type keywords
   T_VOID, 
   T_CHAR, 
   T_INT, 
-  T_LONG,//Structural token
+  T_LONG,// Structural token
   T_INTLIT, 
   T_SEMI,  
   T_IDENT,
@@ -35,9 +35,11 @@ enum {
   T_RBRACE, 
   T_LPAREN, 
   T_RPAREN,
+  T_LBRACKET,
+  T_RBRACKET,
   T_AMPER, 
   T_LOGAND,
-  T_PRINT, 
+  T_PRINT,// Other keywords from the next line 
   T_IF, 
   T_ELSE, 
   T_WHILE, 
@@ -115,13 +117,14 @@ struct ASTnode {
 				// pass to genAST()
 // Structural types
 enum {
-  S_VARIABLE, S_FUNCTION
+  S_VARIABLE, S_FUNCTION, S_ARRAY
 };				// functions have no register to return
 
 // Symbol table structure
 struct symtable {
   char *name;  // Name of a symbol
-  int type;
-  int stype;
-  int endlabel; 
+  int type;  // Primitive type for the symbol.
+  int stype; // Structural type for the symbol
+  int endlabel; // For S_FUNCTIONs, the end label
+  int size; // Number of elements in the symbol
 };

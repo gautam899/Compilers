@@ -202,16 +202,21 @@ int cgprimsize(int type) {
 // Generate a global symbol
 void cgglobsym(int id) {
   int typesize;
-  // Get the size of the type
+  // Get the size of the type.
   typesize = cgprimsize(Gsym[id].type);
 
   fprintf(Outfile, "\t.data\n" "\t.globl\t%s\n", Gsym[id].name);
-  switch(typesize) {
-    case 1: fprintf(Outfile, "%s:\t.byte\t0\n", Gsym[id].name); break;
-    case 4: fprintf(Outfile, "%s:\t.long\t0\n", Gsym[id].name); break;
-    case 8: fprintf(Outfile, "%s:\t.quad\t0\n", Gsym[id].name); break;
-    default: fatald("Unknown typesize in cgglobsym: ", typesize);
-  }
+  fprintf(Outfile, "%s:", Gsym[id].name);
+
+  // Generate the space.
+  for(int i=0;i < Gsym[id].size; i++){
+     switch(typesize) {
+      case 1: fprintf(Outfile, "\t.byte\t0\n"); break;
+      case 4: fprintf(Outfile, "\t.long\t0\n"); break;
+      case 8: fprintf(Outfile, "\t.quad\t0\n"); break;
+      default: fatald("Unknown typesize in cgglobsym: ", typesize);
+    }
+   }
 }
 
 // List of comparison instructions,
@@ -221,7 +226,7 @@ static char *cmplist[] =
 
 // Compare two registers and set if true.
 int cgcompare_and_set(int ASTop, int r1, int r2) {
-
+//M
   // Check the range of the AST operation
   if (ASTop < A_EQ || ASTop > A_GE)
     fatal("Bad ASTop in cgcompare_and_set()");
