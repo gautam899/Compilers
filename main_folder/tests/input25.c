@@ -1,5 +1,5 @@
 int a;
-int b[25];
+int b[5];
 
 int main() {
   b[3]= 12;

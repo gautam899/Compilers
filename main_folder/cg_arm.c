@@ -79,7 +79,7 @@ void cgpostamble() {
   // Print out the global variables
   fprintf(Outfile, ".L2:\n");
   for (int i = 0; i < Globs; i++) {
-    if (Gsym[i].stype == S_VARIABLE)
+    if (Gsym[i].stype == S_VARIABLE || Gsym[i].stype == S_ARRAY)
       fprintf(Outfile, "\t.word %s\n", Gsym[i].name);
   }
 
