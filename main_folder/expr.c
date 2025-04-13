@@ -84,7 +84,10 @@ static struct ASTnode *primary(void) {
       else
 	n = mkastleaf(A_INTLIT, P_INT, Token.intvalue);
       break;
-
+    case T_STRLIT:
+      id = genglobstr(Text);
+      n = mkastleaf(A_STRLIT, P_CHARPTR, id);
+      break;
     case T_IDENT:
       // This could be a variable or a function call.
       // Scan in the next token to find out
