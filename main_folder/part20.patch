@@ -1,0 +1,1034 @@
+commit 872be050be1eb57f3699bd331e2d3da86b97821d
+Author: gautam899 <gautambhavya899@gmail.com>
+Date:   Sun Apr 13 13:24:23 2025 +0000
+
+    Added changes mannually for the part20 which is printing Hello World. In this part there are number of changes made. The first change that is made is we have include one more token in the name of A_STRLIT. Some changes in the assembly is also made like to load the astring and create space for it.
+
+diff --git a/main_folder/.defs.h.swp b/main_folder/.defs.h.swp
+new file mode 100644
+index 0000000..0b1ff8d
+Binary files /dev/null and b/main_folder/.defs.h.swp differ
+diff --git a/main_folder/cg.c b/main_folder/cg.c
+index c8ad39f..63c0b3e 100644
+--- a/main_folder/cg.c
++++ b/main_folder/cg.c
+@@ -104,6 +104,15 @@ int cgloadglob(int id) {
+   }
+   return (r);
+ }
++
++// Given the label number of a global string.
++// load its address into a new register
++int cgloadglobstr(int id){
++  // Get a new register
++  int r = alloc_register();
++  fprintf(Outfile, "\tleaq\tL%d(\%%rip), %s\n", id, reglist[r]);
++  return r;
++}
+ // Add two registers together and return
+ // the number of the register with the result
+ int cgadd(int r1, int r2) {
+@@ -219,6 +228,16 @@ void cgglobsym(int id) {
+    }
+ }
+ 
++// Generate a global string and its start label
++void cgglobstr(int l,char *strvalue){
++  char *cptr;
++  cglabel(l);
++  for (cptr = strvalue; *cptr; cptr++){
++    fprintf(Outfile, "\t.byte\t%d\n", *cptr);
++  }
++  fprintf(Outfile, "\t.byte\t0\n");
++}
++
+ // List of comparison instructions,
+ // in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
+ static char *cmplist[] =
+diff --git a/main_folder/comp1 b/main_folder/comp1
+new file mode 100755
+index 0000000..252768c
+Binary files /dev/null and b/main_folder/comp1 differ
+diff --git a/main_folder/decl.h b/main_folder/decl.h
+index 805cea7..560a3ea 100644
+--- a/main_folder/decl.h
++++ b/main_folder/decl.h
+@@ -21,6 +21,7 @@ void genpostamble();
+ void genfreeregs();
+ void genprintint(int reg);
+ void genglobsym(int id);
++int genglobstr(char *strvalue);
+ int genprimsize(int type);
+ void genreturn(int reg,int id);
+ 
+@@ -32,6 +33,7 @@ void cgfuncpreamble(int id);
+ void cgfuncpostamble(int id);
+ int cgloadint(int value,int type);
+ int cgloadglob(int id);
++int cgloadglobstr(int id);
+ int cgadd(int r1, int r2);
+ int cgsub(int r1, int r2);
+ int cgmul(int r1, int r2);
+@@ -41,6 +43,7 @@ void cgprintint(int r);
+ int cgcall(int r,int id);
+ int cgstorglob(int r, int id);
+ void cgglobsym(int id);
++void cgglobstr(int l, char *strvalue);
+ int cgcompare_and_set(int ASTop, int r1, int r2);
+ int cgcompare_and_jump(int ASTop, int r1, int r2, int label);
+ void cglabel(int l);
+diff --git a/main_folder/defs.h b/main_folder/defs.h
+index 5cd513f..88b8064 100644
+--- a/main_folder/defs.h
++++ b/main_folder/defs.h
+@@ -28,7 +28,8 @@ enum {
+   T_CHAR, 
+   T_INT, 
+   T_LONG,// Structural token
+-  T_INTLIT, 
++  T_INTLIT,
++  T_STRLIT,
+   T_SEMI,  
+   T_IDENT,
+   T_LBRACE, 
+@@ -70,6 +71,7 @@ enum {
+   A_LE, 
+   A_GE,
+   A_INTLIT,
++  A_STRLIT,
+   A_IDENT,  
+   A_GLUE,
+   A_IF, 
+diff --git a/main_folder/dum_cg.c b/main_folder/dum_cg.c
+new file mode 100644
+index 0000000..63c0b3e
+--- /dev/null
++++ b/main_folder/dum_cg.c
+@@ -0,0 +1,358 @@
++#include "defs.h"
++#include "data.h"
++#include "decl.h"
++
++// Code generator for x86-64
++// Copyright (c) 2019 Warren Toomey, GPL3
++
++
++// List of available registers and their names.
++// We need a list of byte and doubleword registers, too
++static int freereg[4];
++static char *reglist[4] = { "%r8", "%r9", "%r10", "%r11" };
++static char *breglist[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
++static char *dreglist[4] = { "%r8d", "%r9d", "%r10d", "%r11d" };
++
++// Set all registers as available
++void freeall_registers(void) {
++  freereg[0] = freereg[1] = freereg[2] = freereg[3] = 1;
++}
++
++// Allocate a free register. Return the number of
++// the register. Die if no available registers.
++static int alloc_register(void) {
++  for (int i = 0; i < 4; i++) {
++    if (freereg[i]) {
++      freereg[i] = 0;
++      return (i);
++    }
++  }
++  fatal("Out of registers");
++  return(NOREG);	// Keep -Wall happy
++}
++
++// Return a register to the list of available registers.
++// Check to see if it's not already there.
++static void free_register(int reg) {
++  if (freereg[reg] != 0)
++    fatald("Error trying to free register", reg);
++  freereg[reg] = 1;
++}
++
++// Print out the assembly preamble
++void cgpreamble() {
++  freeall_registers();
++  fputs("\t.text\n", Outfile);
++}
++
++// Nothing to do
++void cgpostamble() {
++}
++
++// Print out a function preamble
++void cgfuncpreamble(int id) {
++  char *name = Gsym[id].name;
++  fprintf(Outfile,
++	  "\t.text\n"
++	  "\t.globl\t%s\n"
++	  "\t.type\t%s, @function\n"
++	  "%s:\n" "\tpushq\t%%rbp\n"
++	  "\tmovq\t%%rsp, %%rbp\n", name, name, name);
++}
++
++// Print out a function postamble
++void cgfuncpostamble(int id) {
++  cglabel(Gsym[id].endlabel);
++  fputs("\tpopq	%rbp\n" "\tret\n", Outfile);
++}
++
++// Load an integer literal value into a register.
++// Return the number of the register.
++// For x86-64, we don't need to worry about the type.
++int cgloadint(int value, int type) {
++  // Get a new register
++  int r = alloc_register();
++
++  fprintf(Outfile, "\tmovq\t$%d, %s\n", value, reglist[r]);
++  return (r);
++}
++
++// Load a value from a variable into a register.
++// Return the number of the register
++int cgloadglob(int id) {
++  // Get a new register
++  int r = alloc_register();
++
++  // Print out the code to initialise it
++  switch (Gsym[id].type) {
++    case P_CHAR:
++      fprintf(Outfile, "\tmovzbq\t%s(%%rip), %s\n", Gsym[id].name,
++	      reglist[r]);
++      break;
++    case P_INT:
++      fprintf(Outfile, "\tmovzbl\t%s(\%%rip), %s\n", Gsym[id].name,
++	      dreglist[r]);
++      break;
++    case P_LONG:
++    case P_CHARPTR:
++    case P_INTPTR:
++    case P_LONGPTR:
++      fprintf(Outfile, "\tmovq\t%s(\%%rip), %s\n", Gsym[id].name, reglist[r]);
++      break;
++    default:
++      fatald("Bad type in cgloadglob:", Gsym[id].type);
++  }
++  return (r);
++}
++
++// Given the label number of a global string.
++// load its address into a new register
++int cgloadglobstr(int id){
++  // Get a new register
++  int r = alloc_register();
++  fprintf(Outfile, "\tleaq\tL%d(\%%rip), %s\n", id, reglist[r]);
++  return r;
++}
++// Add two registers together and return
++// the number of the register with the result
++int cgadd(int r1, int r2) {
++  fprintf(Outfile, "\taddq\t%s, %s\n", reglist[r1], reglist[r2]);
++  free_register(r1);
++  return (r2);
++}
++
++// Subtract the second register from the first and
++// return the number of the register with the result
++int cgsub(int r1, int r2) {
++  fprintf(Outfile, "\tsubq\t%s, %s\n", reglist[r2], reglist[r1]);
++  free_register(r2);
++  return (r1);
++}
++
++// Multiply two registers together and return
++// the number of the register with the result
++int cgmul(int r1, int r2) {
++  fprintf(Outfile, "\timulq\t%s, %s\n", reglist[r1], reglist[r2]);
++  free_register(r1);
++  return (r2);
++}
++
++// Divide the first register by the second and
++// return the number of the register with the result
++int cgdiv(int r1, int r2) {
++  fprintf(Outfile, "\tmovq\t%s,%%rax\n", reglist[r1]);
++  fprintf(Outfile, "\tcqo\n");
++  fprintf(Outfile, "\tidivq\t%s\n", reglist[r2]);
++  fprintf(Outfile, "\tmovq\t%%rax,%s\n", reglist[r1]);
++  free_register(r2);
++  return (r1);
++}
++
++// Call printint() with the given register
++void cgprintint(int r) {
++  fprintf(Outfile, "\tmovq\t%s, %%rdi\n", reglist[r]);
++  fprintf(Outfile, "\tcall\tprintint\n");
++  free_register(r);
++}
++
++// Call a function with one argument from the given register
++// Return the register with the result
++int cgcall(int r, int id) {
++  // Get a new register
++  int outr = alloc_register();
++  fprintf(Outfile, "\tmovq\t%s, %%rdi\n", reglist[r]);
++  fprintf(Outfile, "\tcall\t%s\n", Gsym[id].name);
++  fprintf(Outfile, "\tmovq\t%%rax, %s\n", reglist[outr]);
++  free_register(r);
++  return (outr);
++}
++
++// Shift a register left by a constant
++int cgshlconst(int r, int val) {
++  fprintf(Outfile, "\tsalq\t$%d, %s\n", val, reglist[r]);
++  return(r);
++}
++
++// Store a register's value into a variable
++int cgstorglob(int r, int id) {
++  switch (Gsym[id].type) {
++    case P_CHAR:
++      fprintf(Outfile, "\tmovb\t%s, %s(\%%rip)\n", breglist[r],
++	      Gsym[id].name);
++      break;
++    case P_INT:
++      fprintf(Outfile, "\tmovl\t%s, %s(\%%rip)\n", dreglist[r],
++	      Gsym[id].name);
++      break;
++    case P_LONG:
++    case P_CHARPTR:
++    case P_INTPTR:
++    case P_LONGPTR:
++      fprintf(Outfile, "\tmovq\t%s, %s(\%%rip)\n", reglist[r], Gsym[id].name);
++      break;
++    default:
++      fatald("Bad type in cgloadglob:", Gsym[id].type);
++  }
++  return (r);
++}
++// Array of type sizes in P_XXX order.
++// 0 means no size.
++static int psize[] = { 0, 0, 1, 4, 8, 8, 8, 8, 8};
++
++// Given a P_XXX type value, return the
++// size of a primitive type in bytes.
++int cgprimsize(int type) {
++  // Check the type is valid
++  if (type < P_NONE || type > P_LONGPTR)
++    fatal("Bad type in cgprimsize()");
++  return (psize[type]);
++}
++
++// Generate a global symbol
++void cgglobsym(int id) {
++  int typesize;
++  // Get the size of the type.
++  typesize = cgprimsize(Gsym[id].type);
++
++  fprintf(Outfile, "\t.data\n" "\t.globl\t%s\n", Gsym[id].name);
++  fprintf(Outfile, "%s:", Gsym[id].name);
++
++  // Generate the space.
++  for(int i=0;i < Gsym[id].size; i++){
++     switch(typesize) {
++      case 1: fprintf(Outfile, "\t.byte\t0\n"); break;
++      case 4: fprintf(Outfile, "\t.long\t0\n"); break;
++      case 8: fprintf(Outfile, "\t.quad\t0\n"); break;
++      default: fatald("Unknown typesize in cgglobsym: ", typesize);
++    }
++   }
++}
++
++// Generate a global string and its start label
++void cgglobstr(int l,char *strvalue){
++  char *cptr;
++  cglabel(l);
++  for (cptr = strvalue; *cptr; cptr++){
++    fprintf(Outfile, "\t.byte\t%d\n", *cptr);
++  }
++  fprintf(Outfile, "\t.byte\t0\n");
++}
++
++// List of comparison instructions,
++// in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
++static char *cmplist[] =
++  { "sete", "setne", "setl", "setg", "setle", "setge" };
++
++// Compare two registers and set if true.
++int cgcompare_and_set(int ASTop, int r1, int r2) {
++//M
++  // Check the range of the AST operation
++  if (ASTop < A_EQ || ASTop > A_GE)
++    fatal("Bad ASTop in cgcompare_and_set()");
++
++  fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
++  fprintf(Outfile, "\t%s\t%s\n", cmplist[ASTop - A_EQ], breglist[r2]);
++  fprintf(Outfile, "\tmovzbq\t%s, %s\n", breglist[r2], reglist[r2]);
++  free_register(r1);
++  return (r2);
++}
++
++// Generate a label
++void cglabel(int l) {
++  fprintf(Outfile, "L%d:\n", l);
++}
++
++// Generate a jump to a label
++void cgjump(int l) {
++  fprintf(Outfile, "\tjmp\tL%d\n", l);
++}
++
++// List of inverted jump instructions,
++// in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
++static char *invcmplist[] = { "je", "jne", "jl", "jgt", "jle", "jge" };
++
++// Compare two registers and jump if false.
++int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
++
++  // Check the range of the AST operation
++  if (ASTop < A_EQ || ASTop > A_GE)
++    fatal("Bad ASTop in cgcompare_and_set()");
++
++  fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
++  fprintf(Outfile, "\t%s\tL%d\n", invcmplist[ASTop - A_EQ], label);
++  freeall_registers();
++  return (NOREG);
++}
++
++// Widen the value in the register from the old
++// to the new type, and return a register with
++// this new value
++int cgwiden(int r, int oldtype, int newtype) {
++  // Nothing to do
++  return (r);
++}
++
++// Generate code to return a value from a function
++void cgreturn(int reg, int id) {
++  // Generate code depending on the function's type
++  switch (Gsym[id].type) {
++    case P_CHAR:
++      fprintf(Outfile, "\tmovzbl\t%s, %%eax\n", breglist[reg]);
++      break;
++    case P_INT:
++      fprintf(Outfile, "\tmovl\t%s, %%eax\n", dreglist[reg]);
++      break;
++    case P_LONG:
++      fprintf(Outfile, "\tmovq\t%s, %%rax\n", reglist[reg]);
++      break;
++    default:
++      fatald("Bad function type in cgreturn:", Gsym[id].type);
++  }
++  cgjump(Gsym[id].endlabel);
++}
++
++// Generate code to load the address of a global
++// identifier into a variable. Return a new register
++int cgaddress(int id) {
++  int r = alloc_register();
++
++  fprintf(Outfile, "\tleaq\t%s(%%rip), %s\n", Gsym[id].name, reglist[r]);
++  return (r);
++}
++
++// Dereference a pointer to get the value it
++// pointing at into the same register
++int cgderef(int r, int type) {
++  switch (type) {
++    case P_CHARPTR:
++      fprintf(Outfile, "\tmovzbq\t(%s), %s\n", reglist[r], reglist[r]);
++      break;
++    case P_INTPTR:
++      fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
++      break;
++    case P_LONGPTR:
++      fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
++      break;
++    default:
++      fatald("Can't cgderef on type:",type); 
++  }
++  return (r);
++}
++
++// Store through a dereferenced pointer
++int cgstorderef(int r1, int r2, int type) {
++  switch (type) {
++    case P_CHAR:
++      fprintf(Outfile, "\tmovb\t%s, (%s)\n", breglist[r1], reglist[r2]);
++      break;
++    case P_INT:
++      fprintf(Outfile, "\tmovq\t%s, (%s)\n", reglist[r1], reglist[r2]);
++      break;
++    case P_LONG:
++      fprintf(Outfile, "\tmovq\t%s, (%s)\n", reglist[r1], reglist[r2]);
++      break;
++    default:
++      fatald("Can't cgstoderef on type:", type);
++  }
++  return (r1);
++}
+diff --git a/main_folder/dummpy_scan.c b/main_folder/dummpy_scan.c
+new file mode 100644
+index 0000000..ddd71e8
+--- /dev/null
++++ b/main_folder/dummpy_scan.c
+@@ -0,0 +1,339 @@
++#include "defs.h"
++#include "data.h"
++#include "decl.h"
++
++// Lexical scanning
++// Copyright (c) 2019 Warren Toomey, GPL3
++
++// Return the position of character c
++// in string s, or -1 if c not found
++static int chrpos(char *s, int c) {
++  char *p;
++
++  p = strchr(s, c);
++  return (p ? p - s : -1);
++}
++
++// Get the next character from the input file.
++static int next(void) {
++  int c;
++
++  if (Putback) {		// Use the character put
++    c = Putback;		// back if there is one
++    Putback = 0;
++    return (c);
++  }
++
++  c = fgetc(Infile);		// Read from input file
++  if ('\n' == c)
++    Line++;			// Increment line count
++  return (c);
++}
++
++// Put back an unwanted character
++static void putback(int c) {
++  Putback = c;
++}
++
++// Skip past input that we don't need to deal with, 
++// i.e. whitespace, newlines. Return the first
++// character we do need to deal with.
++static int skip(void) {
++  int c;
++
++  c = next();
++  while (' ' == c || '\t' == c || '\n' == c || '\r' == c || '\f' == c) {
++    c = next();
++  }
++  return (c);
++}
++
++// Return the next character from a character or string literal
++static int scanch(void) {
++  int c;
++
++  // Get the next input character and interpret
++  // metacharacters that start with a backslash
++  c = next();
++  if (c == '\\') {
++    switch (c = next()) {
++      case 'a':
++	return '\a';
++      case 'b':
++	return '\b';
++      case 'f':
++	return '\f';
++      case 'n':
++	return '\n';
++      case 'r':
++	return '\r';
++      case 't':
++	return '\t';
++      case 'v':
++	return '\v';
++      case '\\':
++	return '\\';
++      case '"':
++	return '"';
++      case '\'':
++	return '\'';
++      default:
++	fatalc("unknown escape sequence", c);
++    }
++  }
++  return (c);			// Just an ordinary old character!
++}
++
++// Scan and return an integer literal
++// value from the input file.
++static int scanint(int c) {
++  int k, val = 0;
++
++  // Convert each character into an int value
++  while ((k = chrpos("0123456789", c)) >= 0) {
++    val = val * 10 + k;
++    c = next();
++  }
++
++  // We hit a non-integer character, put it back.
++  putback(c);
++  return (val);
++}
++
++// Scan in a string literal from the input file, 
++// and store it in buf[]. Return the length of the string.
++static int scanstr(char *buf) {
++  int i, c;
++
++  // Loop while we have enough buffer space
++  for (i=0; i<TEXTLEN-1; i++) {
++    // Get the next char and append to buf
++    // Return when we hit the ending double quote
++    if ((c = scanch()) == '"') {
++      buf[i] = 0;
++      return(i);
++    }
++    buf[i] = c;
++  }
++  // Ran out of buf[] space
++  fatal("String literal too long");
++  return(0);
++}
++
++// Scan an identifier from the input file and
++// store it in buf[]. Return the identifier's length
++static int scanident(int c, char *buf, int lim) {
++  int i = 0;
++
++  // Allow digits, alpha and underscores
++  while (isalpha(c) || isdigit(c) || '_' == c) {
++    // Error if we hit the identifier length limit,
++    // else append to buf[] and get next character
++    if (lim - 1 == i) {
++      fatal("Identifier too long");
++    } else if (i < lim - 1) {
++      buf[i++] = c;
++    }
++    c = next();
++  }
++  // We hit a non-valid character, put it back.
++  // NUL-terminate the buf[] and return the length
++  putback(c);
++  buf[i] = '\0';
++  return (i);
++}
++
++// Given a word from the input, return the matching
++// keyword token number or 0 if it's not a keyword.
++// Switch on the first letter so that we don't have
++// to waste time strcmp()ing against all the keywords.
++static int keyword(char *s) {
++  switch (*s) 
++  {
++    case 'c':
++      if (!strcmp(s, "char"))
++	return (T_CHAR);
++      break;
++    case 'e':
++      if (!strcmp(s, "else"))
++	return (T_ELSE);
++      break;
++    case 'i':
++      if (!strcmp(s, "if"))
++	return (T_IF);
++      if (!strcmp(s, "int"))
++	return (T_INT);
++      break;
++    case 'l':
++      if(!strcmp(s,"long"))
++	return (T_LONG);
++      break;
++    case 'r':
++      if (!strcmp(s, "return"))
++	return (T_RETURN);
++      break;	
++    case 'w':
++      if (!strcmp(s, "while"))
++	return (T_WHILE);
++      break;
++    case 'd':
++      if (!strcmp(s,"do"))
++	return (T_DO);
++      break;
++    case 'f':
++      if(!strcmp(s,"for"))
++	return T_FOR;
++      break;
++    case 'v':
++      if(!strcmp(s,"void"))
++	return T_VOID;	      
++      break;
++  }
++  return (0);
++}
++
++// A pointer to the rejected token. Why do we need this? 
++// Consider this: a = fred(5)+b and a = fred + b. We want to be able to differentiate between fred(5) and fred(). So looking ahead for the next token will help. But during this process we will loose the previous token. If I look one token ahead in fred, i will have '(' but I will end up loosing fred so we need to keep a pointer to rejected token. 
++static struct token *Rejtoken = NULL;
++
++//Reject the token that we just scanned
++void reject_token(struct token *t){
++  if(Rejtoken != NULL){
++    fatal("Can't reject a token twice");
++  }
++  Rejtoken = t;
++}
++
++
++// Scan and return the next token found in the input.
++// Return 1 if token valid, 0 if no tokens left.
++int scan(struct token *t) {
++  int c, tokentype;
++  
++  if(Rejtoken != NULL){
++    t = Rejtoken;
++    Rejtoken = NULL;
++    return 1;
++  }
++  // Skip whitespace
++  c = skip();
++
++  // Determine the token based on
++  // the input character
++  switch (c) {
++    case EOF:
++      t->token = T_EOF;
++      return (0);
++    case '+':
++      t->token = T_PLUS;
++      break;
++    case '-':
++      t->token = T_MINUS;
++      break;
++    case '*':
++      t->token = T_STAR;
++      break;
++    case '/':
++      t->token = T_SLASH;
++      break;
++    case ';':
++      t->token = T_SEMI;
++      break;
++    case '{':
++      t->token = T_LBRACE;
++      break;
++    case '}':
++      t->token = T_RBRACE;
++      break;
++    case '(':
++      t->token = T_LPAREN;
++      break;
++    case ')':
++      t->token = T_RPAREN;
++      break;
++    case '[':
++      t->token = T_LBRACKET;
++      break;
++    case ']':
++      t->token = T_RBRACKET;
++      break;
++    case '=':
++      if ((c = next()) == '=') {
++	t->token = T_EQ;
++      } else {
++	putback(c);
++	t->token = T_ASSIGN;
++      }
++      break;
++    case '!':
++      if ((c = next()) == '=') {
++	t->token = T_NE;
++      } else {
++	fatalc("Unrecognised character", c);
++      }
++      break;
++    case '<':
++      if ((c = next()) == '=') {
++	t->token = T_LE;
++      } else {
++	putback(c);
++	t->token = T_LT;
++      }
++      break;
++    case '>':
++      if ((c = next()) == '=') {
++	t->token = T_GE;
++      } else {
++	putback(c);
++	t->token = T_GT;
++      }
++      break;
++    case '&':
++      if ((c = next()) == '&') {
++	t->token = T_LOGAND;
++      } else {
++	putback(c);
++	t->token = T_AMPER;
++      }
++      break;
++    case '\'':
++      // If it's a quote, scna in the iteral character valueand the trailing quote.
++      t->intvalue = scanch();
++      t->token = T_INTLIT;
++      if (next() != '\'')
++      {
++         fatal("Excepted '\\' at end of char literal");
++      }
++      break;
++    case '"':
++      scanstr(Text);
++      t->token = T_STRLIT;
++      break;
++    default:
++
++      // If it's a digit, scan the
++      // literal integer value in
++      if (isdigit(c)) {
++	t->intvalue = scanint(c);
++	t->token = T_INTLIT;
++	break;
++      } else if (isalpha(c) || '_' == c) {
++	// Read in a keyword or identifier
++	scanident(c, Text, TEXTLEN);
++
++	// If it's a recognised keyword, return that token
++	if ((tokentype = keyword(Text)) != 0) {
++	  t->token = tokentype;
++	  break;
++	}
++	// Not a recognised keyword, so it must be an identifier
++	t->token = T_IDENT;
++	break;
++      }
++      // The character isn't part of any recognised token, error
++      fatalc("Unrecognised character", c);
++  }
++
++  // We found a token
++  return (1);
++}
+diff --git a/main_folder/expr.c b/main_folder/expr.c
+index a02279d..a029412 100644
+--- a/main_folder/expr.c
++++ b/main_folder/expr.c
+@@ -84,7 +84,10 @@ static struct ASTnode *primary(void) {
+       else
+ 	n = mkastleaf(A_INTLIT, P_INT, Token.intvalue);
+       break;
+-
++    case T_STRLIT:
++      id = genglobstr(Text);
++      n = mkastleaf(A_STRLIT, P_CHARPTR, id);
++      break;
+     case T_IDENT:
+       // This could be a variable or a function call.
+       // Scan in the next token to find out
+diff --git a/main_folder/gen.c b/main_folder/gen.c
+index b1b0c27..4361f40 100644
+--- a/main_folder/gen.c
++++ b/main_folder/gen.c
+@@ -200,6 +200,8 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
+ 	return (cgcompare_and_set(n->op, leftreg, rightreg));
+     case A_INTLIT:
+       return (cgloadint(n->v.intvalue,n->type));
++    case A_STRLIT:
++      return (cgloadglobstr(n->v.id));
+     case A_IDENT:
+       // Load our values if we are a rvalue or we are being dereferenced.
+       if(n->rvalue || parentASTop == A_DEREF){
+@@ -266,11 +268,14 @@ void genfreeregs() {
+ void genprintint(int reg) {
+   cgprintint(reg);
+ }
+-
+ void genglobsym(int id) {
+   cgglobsym(id);
+ }
+-
++int genglobstr(char *strvalue){
++  int l = genlabel();
++  cgglobstr(l, strvalue);
++  return l;
++}
+ int genprimsize(int type){
+   return cgprimsize(type);
+ }
+diff --git a/main_folder/lib/printint.c b/main_folder/lib/printint.c
+index 4299957..9cf8e78 100644
+--- a/main_folder/lib/printint.c
++++ b/main_folder/lib/printint.c
+@@ -2,3 +2,7 @@
+ void printint(long x) {
+   printf("%ld\n", x);
+ }
++
++void printchar(long x) {
++  putc((char)(x & 0x7f), stdout);
++}
+diff --git a/main_folder/main.c b/main_folder/main.c
+index c340b88..a2dff09 100644
+--- a/main_folder/main.c
++++ b/main_folder/main.c
+@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
+   }
+   //For now, ensure that void printint() is defined
+   addglob("printint",P_CHAR,S_FUNCTION,0, 0);
++  addglob("printchar", P_VOID, S_FUNCTION, 0, 0);
+   scan(&Token);			// Get the first token from the input
+   genpreamble();  // Output the preamble
+   global_declarations();  //Parse the global decl. In this part everthing is a global declaration.
+diff --git a/main_folder/scan.c b/main_folder/scan.c
+index 61573fc..ddd71e8 100644
+--- a/main_folder/scan.c
++++ b/main_folder/scan.c
+@@ -48,6 +48,42 @@ static int skip(void) {
+   return (c);
+ }
+ 
++// Return the next character from a character or string literal
++static int scanch(void) {
++  int c;
++
++  // Get the next input character and interpret
++  // metacharacters that start with a backslash
++  c = next();
++  if (c == '\\') {
++    switch (c = next()) {
++      case 'a':
++	return '\a';
++      case 'b':
++	return '\b';
++      case 'f':
++	return '\f';
++      case 'n':
++	return '\n';
++      case 'r':
++	return '\r';
++      case 't':
++	return '\t';
++      case 'v':
++	return '\v';
++      case '\\':
++	return '\\';
++      case '"':
++	return '"';
++      case '\'':
++	return '\'';
++      default:
++	fatalc("unknown escape sequence", c);
++    }
++  }
++  return (c);			// Just an ordinary old character!
++}
++
+ // Scan and return an integer literal
+ // value from the input file.
+ static int scanint(int c) {
+@@ -64,6 +100,26 @@ static int scanint(int c) {
+   return (val);
+ }
+ 
++// Scan in a string literal from the input file, 
++// and store it in buf[]. Return the length of the string.
++static int scanstr(char *buf) {
++  int i, c;
++
++  // Loop while we have enough buffer space
++  for (i=0; i<TEXTLEN-1; i++) {
++    // Get the next char and append to buf
++    // Return when we hit the ending double quote
++    if ((c = scanch()) == '"') {
++      buf[i] = 0;
++      return(i);
++    }
++    buf[i] = c;
++  }
++  // Ran out of buf[] space
++  fatal("String literal too long");
++  return(0);
++}
++
+ // Scan an identifier from the input file and
+ // store it in buf[]. Return the identifier's length
+ static int scanident(int c, char *buf, int lim) {
+@@ -136,7 +192,7 @@ static int keyword(char *s) {
+   return (0);
+ }
+ 
+-//A pointer to the rejected token. Why do we need this? 
++// A pointer to the rejected token. Why do we need this? 
+ // Consider this: a = fred(5)+b and a = fred + b. We want to be able to differentiate between fred(5) and fred(). So looking ahead for the next token will help. But during this process we will loose the previous token. If I look one token ahead in fred, i will have '(' but I will end up loosing fred so we need to keep a pointer to rejected token. 
+ static struct token *Rejtoken = NULL;
+ 
+@@ -240,6 +296,19 @@ int scan(struct token *t) {
+ 	t->token = T_AMPER;
+       }
+       break;
++    case '\'':
++      // If it's a quote, scna in the iteral character valueand the trailing quote.
++      t->intvalue = scanch();
++      t->token = T_INTLIT;
++      if (next() != '\'')
++      {
++         fatal("Excepted '\\' at end of char literal");
++      }
++      break;
++    case '"':
++      scanstr(Text);
++      t->token = T_STRLIT;
++      break;
+     default:
+ 
+       // If it's a digit, scan the
+diff --git a/main_folder/tests/input26.c b/main_folder/tests/input26.c
+new file mode 100644
+index 0000000..6993180
+--- /dev/null
++++ b/main_folder/tests/input26.c
+@@ -0,0 +1,11 @@
++char  c;
++char *str;
++
++int main() {
++  c= '\n'; printint(c);
++
++  for (str= "Hello world\n"; *str != 0; str= str + 1) {
++    printchar(*str);
++  }
++  return(0);
++}
+diff --git a/main_folder/tests/out.input26.c b/main_folder/tests/out.input26.c
+new file mode 100644
+index 0000000..7b83769
+--- /dev/null
++++ b/main_folder/tests/out.input26.c
+@@ -0,0 +1,2 @@
++10
++Hello world
+diff --git a/main_folder/tree.c b/main_folder/tree.c
+index 0da8971..bcb9b62 100644
+--- a/main_folder/tree.c
++++ b/main_folder/tree.c
+@@ -114,6 +114,8 @@ void dumpAST(struct ASTnode *n,int label,int level){
+       fprintf(stdout, "A_GE\n"); return;
+     case A_INTLIT:
+       fprintf(stdout, "A_INTLIT %d\n", n->v.intvalue); return;
++    case A_STRLIT:
++      fprintf(stdout, "A_STRLIT rval label L%d\n", n->v.id); return;
+     case A_IDENT:
+       if (n->rvalue)
+         fprintf(stdout, "A_IDENT rval %s\n", Gsym[n->v.id].name);
+diff --git a/main_folder/types.c b/main_folder/types.c
+index 7e1789c..3f671c7 100644
+--- a/main_folder/types.c
++++ b/main_folder/types.c
+@@ -113,6 +113,8 @@ struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op) {
+       rsize = genprimsize(value_at(rtype));
+       if (rsize > 1) 
+ 	return (mkastunary(A_SCALE, rtype, tree, rsize));
++      else
++	return tree;
+     }
+   }
+   // If we get here, the types are not compatible
