@@ -15,7 +15,7 @@ compn: $(SRCN)
 
 comp1arm: $(ARMSRCS)
 	cc -o comp1arm -g -Wall $(ARMSRCS)
-	cp comp1arm comp1
+	
 
 clean:
 	rm -f comp1 comp1arm compn *.o *.s out

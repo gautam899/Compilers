@@ -337,5 +337,3 @@ int cgstorderef(int r1, int r2, int type) {
   }
   return (r1);
 }
-
-

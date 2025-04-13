@@ -45,10 +45,9 @@ static int Intslot = 0;
 // Determine the offset of a large integer
 // literal from the .L3 label. If the integer
 // isn't in the list, add it.
-static void set_int_offset(int val) {
+static void set_int_offset(int val, int type) {
   int offset = -1;
 
-  // See if it is already there
   for (int i = 0; i < Intslot; i++) {
     if (Intlist[i] == val) {
       offset = 4 * i;
@@ -124,7 +123,7 @@ int cgloadint(int value, int type) {
   if (value <= 1000)
     fprintf(Outfile, "\tmov\t%s, #%d\n", reglist[r], value);
   else {
-    set_int_offset(value);
+    set_int_offset(value, type);
     fprintf(Outfile, "\tldr\t%s, [r3]\n", reglist[r]);
   }
   return (r);
@@ -137,7 +136,8 @@ static void set_var_offset(int id) {
   // Walk the symbol table up to id.
   // Find S_VARIABLEs and add on 4 until
   // we get to our variable
-
+  // We need to make the offset w.r.t to the size of the variable. 
+  
   for (int i = 0; i < id; i++) {
     if (Gsym[i].stype == S_VARIABLE)
       offset += 4;
