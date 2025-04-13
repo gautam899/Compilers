@@ -48,42 +48,6 @@ static int skip(void) {
   return (c);
 }
 
-// Return the next character from a character or string literal
-static int scanch(void) {
-  int c;
-
-  // Get the next input character and interpret
-  // metacharacters that start with a backslash
-  c = next();
-  if (c == '\\') {
-    switch (c = next()) {
-      case 'a':
-	return '\a';
-      case 'b':
-	return '\b';
-      case 'f':
-	return '\f';
-      case 'n':
-	return '\n';
-      case 'r':
-	return '\r';
-      case 't':
-	return '\t';
-      case 'v':
-	return '\v';
-      case '\\':
-	return '\\';
-      case '"':
-	return '"';
-      case '\'':
-	return '\'';
-      default:
-	fatalc("unknown escape sequence", c);
-    }
-  }
-  return (c);			// Just an ordinary old character!
-}
-
 // Scan and return an integer literal
 // value from the input file.
 static int scanint(int c) {
@@ -98,26 +62,6 @@ static int scanint(int c) {
   // We hit a non-integer character, put it back.
   putback(c);
   return (val);
-}
-
-// Scan in a string literal from the input file, 
-// and store it in buf[]. Return the length of the string.
-static int scanstr(char *buf) {
-  int i, c;
-
-  // Loop while we have enough buffer space
-  for (i=0; i<TEXTLEN-1; i++) {
-    // Get the next char and append to buf
-    // Return when we hit the ending double quote
-    if ((c = scanch()) == '"') {
-      buf[i] = 0;
-      return(i);
-    }
-    buf[i] = c;
-  }
-  // Ran out of buf[] space
-  fatal("String literal too long");
-  return(0);
 }
 
 // Scan an identifier from the input file and
@@ -192,7 +136,7 @@ static int keyword(char *s) {
   return (0);
 }
 
-// A pointer to the rejected token. Why do we need this? 
+//A pointer to the rejected token. Why do we need this? 
 // Consider this: a = fred(5)+b and a = fred + b. We want to be able to differentiate between fred(5) and fred(). So looking ahead for the next token will help. But during this process we will loose the previous token. If I look one token ahead in fred, i will have '(' but I will end up loosing fred so we need to keep a pointer to rejected token. 
 static struct token *Rejtoken = NULL;
 
@@ -295,19 +239,6 @@ int scan(struct token *t) {
 	putback(c);
 	t->token = T_AMPER;
       }
-      break;
-    case '\'':
-      // If it's a quote, scna in the iteral character valueand the trailing quote.
-      t->intvalue = scanch();
-      t->token = T_INTLIT;
-      if (next() != '\'')
-      {
-         fatal("Excepted '\\' at end of char literal");
-      }
-      break;
-    case '"':
-      scanstr(Text);
-      t->token = T_STRLIT;
       break;
     default:
 

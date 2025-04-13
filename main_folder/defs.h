@@ -28,8 +28,7 @@ enum {
   T_CHAR, 
   T_INT, 
   T_LONG,// Structural token
-  T_INTLIT,
-  T_STRLIT,
+  T_INTLIT, 
   T_SEMI,  
   T_IDENT,
   T_LBRACE, 
@@ -71,7 +70,6 @@ enum {
   A_LE, 
   A_GE,
   A_INTLIT,
-  A_STRLIT,
   A_IDENT,  
   A_GLUE,
   A_IF, 

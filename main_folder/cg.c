@@ -104,15 +104,6 @@ int cgloadglob(int id) {
   }
   return (r);
 }
-
-// Given the label number of a global string.
-// load its address into a new register
-int cgloadglobstr(int id){
-  // Get a new register
-  int r = alloc_register();
-  fprintf(Outfile, "\tleaq\tL%d(\%%rip), %s\n", id, reglist[r]);
-  return r;
-}
 // Add two registers together and return
 // the number of the register with the result
 int cgadd(int r1, int r2) {
@@ -226,16 +217,6 @@ void cgglobsym(int id) {
       default: fatald("Unknown typesize in cgglobsym: ", typesize);
     }
    }
-}
-
-// Generate a global string and its start label
-void cgglobstr(int l,char *strvalue){
-  char *cptr;
-  cglabel(l);
-  for (cptr = strvalue; *cptr; cptr++){
-    fprintf(Outfile, "\t.byte\t%d\n", *cptr);
-  }
-  fprintf(Outfile, "\t.byte\t0\n");
 }
 
 // List of comparison instructions,
