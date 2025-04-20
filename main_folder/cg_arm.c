@@ -166,6 +166,17 @@ int cgloadglob(int id) {
   }
   return (r);
 }
+
+// Given the label number of a global string,
+// load its address into a new register
+int cgloadglobstr(int id) {
+    int r = alloc_register();
+    //fprintf(Outfile, "\tadr\t%s, .L%d\n", reglist[r], id);    
+    fprintf(Outfile, "\tadrp\t%s, .L%d\n", reglist[r], id);
+    fprintf(Outfile, "\tadd\t%s, %s, :lo12:.L%d\n", reglist[r], reglist[r], id);
+    return r;
+}
+
 // Add two registers together and return
 // the number of the register with the result
 int cgadd(int r1, int r2) {
@@ -284,6 +295,16 @@ void cgglobsym(int id) {
     
   }
   ***/
+}
+
+// Generate a global string and its start label
+void cgglobstr(int l, char *strvalue) {
+  char *cptr;
+  cglabel(l);
+  for (cptr= strvalue; *cptr; cptr++) {
+    fprintf(Outfile, "\t.byte\t%d\n", *cptr);
+  }
+  fprintf(Outfile, "\t.byte\t0\n");
 }
 
 // List of comparison instructions,
