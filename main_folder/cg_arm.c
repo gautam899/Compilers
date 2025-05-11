@@ -149,21 +149,69 @@ static void set_var_offset(int id) {
 
 // Load a value from a variable into a register.
 // Return the number of the register
-int cgloadglob(int id) {
+int cgloadglob(int id, int op) {
   // Get a new register
   int r = alloc_register();
-
+  int r1 = alloc_register();
   // Get the offset to the variable
   set_var_offset(id);
 
   switch (Gsym[id].type) {
-  case P_CHAR:
-    fprintf(Outfile, "\tldrb\t%s, [r3]\n", reglist[r]);
-    break;
-  default:
+    case P_CHAR:
+      if (op == A_PREINC){
+	fprintf(Outfile, "\tldrb\t%s, [r3]\n", reglist[r]);
+        fprintf(Outfile, "\tadd\t%s, %s, #1\n",reglist[r],reglist[r]);
+	fprintf(Outfile, "\tstrb\t%s, [r3]\n",reglist[r]);
+      }
+      if (op == A_PREDEC){
+	fprintf(Outfile, "\tldrb\t%s, [r3]\n", reglist[r]);
+        fprintf(Outfile, "\tsub\t%s, %s, #1\n",reglist[r],reglist[r]);
+        fprintf(Outfile, "\tstrb\t%s, [r3]\n",reglist[r]);
+      }
+      fprintf(Outfile, "\tldrb\t%s, [r3]\n", reglist[r]);
+      if (op == A_POSTINC){
+        fprintf(Outfile, "\tldrb\t%s, [r3]\n", reglist[r1]);
+        fprintf(Outfile, "\tadd\t%s, %s, #1\n",reglist[r1],reglist[r]);
+        fprintf(Outfile, "\tstrb\t%s, [r3]\n",reglist[r1]);
+      }
+      if (op == A_POSTDEC){
+        fprintf(Outfile, "\tldrb\t%s, [r3]\n", reglist[r1]);
+        fprintf(Outfile, "\tsub\t%s, %s, #1\n",reglist[r1],reglist[r]);
+        fprintf(Outfile, "\tstrb\t%s, [r3]\n",reglist[r1]);
+      }
+
+      break;
+    case P_INT:
+    case P_LONG:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
+    if (op == A_PREINC){
+        fprintf(Outfile, "\tldr\t%s, [r3]\n", reglist[r]);
+        fprintf(Outfile, "\tadd\t%s, %s, #1\n",reglist[r],reglist[r]);
+        fprintf(Outfile, "\tstr\t%s, [r3]\n",reglist[r]);
+    }
+    if (op == A_PREDEC){
+	fprintf(Outfile, "\tldr\t%s, [r3]\n", reglist[r]);
+        fprintf(Outfile, "\tsub\t%s, %s, #1\n",reglist[r],reglist[r]);
+        fprintf(Outfile, "\tstr\t%s, [r3]\n",reglist[r]);
+    } 
     fprintf(Outfile, "\tldr\t%s, [r3]\n", reglist[r]);
+    if (op == A_POSTINC){	
+	fprintf(Outfile, "\tldr\t%s, [r3]\n", reglist[r1]);
+        fprintf(Outfile, "\tadd\t%s, %s, #1\n",reglist[r1],reglist[r]);
+        fprintf(Outfile, "\tstr\t%s, [r3]\n",reglist[r1]);
+    }
+    if (op == A_POSTDEC){
+        fprintf(Outfile, "\tldr\t%s, [r3]\n", reglist[r1]);	    
+        fprintf(Outfile, "\tsub\t%s, %s, #1\n",reglist[r1],reglist[r]);
+        fprintf(Outfile, "\tstr\t%s, [r3]\n",reglist[r1]);
+    }
     break;
+    default:
+      fatald("Bad type in cgloadglob:", Gsym[id].type);
   }
+  free_register(r1);
   return (r);
 }
 
@@ -171,9 +219,7 @@ int cgloadglob(int id) {
 // load its address into a new register
 int cgloadglobstr(int id) {
     int r = alloc_register();
-    //fprintf(Outfile, "\tadr\t%s, .L%d\n", reglist[r], id);    
-    fprintf(Outfile, "\tadrp\t%s, .L%d\n", reglist[r], id);
-    fprintf(Outfile, "\tadd\t%s, %s, :lo12:.L%d\n", reglist[r], reglist[r], id);
+    fprintf(Outfile, "\tldr\t%s, =L%d\n", reglist[r], id);
     return r;
 }
 
@@ -216,6 +262,64 @@ int cgdiv(int r1, int r2) {
   fprintf(Outfile, "\tmov\t%s, r0\n", reglist[r1]);
   free_register(r2);
   return (r1);
+}
+
+int cgand(int r1, int r2) {
+    fprintf(Outfile, "\tand\t%s, %s, %s\n", reglist[r2], reglist[r1], reglist[r2]);
+    free_register(r1);
+    return (r2);
+}
+
+int cgor(int r1, int r2) {
+    fprintf(Outfile, "\torr\t%s, %s, %s\n", reglist[r2], reglist[r1], reglist[r2]);
+    free_register(r1);
+    return (r2);
+}
+
+int cgxor(int r1, int r2) {
+    fprintf(Outfile, "\teor\t%s, %s, %s\n", reglist[r2], reglist[r1], reglist[r2]);
+    free_register(r1);
+    return (r2);
+}
+
+int cgshl(int r1, int r2) {
+    fprintf(Outfile, "\tlsl\t%s, %s, %s\n", reglist[r1], reglist[r1], reglist[r2]);
+    free_register(r2);
+    return (r1);
+}
+
+int cgshr(int r1, int r2) {
+    fprintf(Outfile, "\tlsr\t%s, %s, %s\n", reglist[r1], reglist[r1], reglist[r2]);
+    free_register(r2);
+    return (r1);
+}
+
+int cgnegate(int r) {
+    fprintf(Outfile, "\trsb\t%s, %s, #0\n", reglist[r], reglist[r]);
+    return (r);
+}
+
+int cginvert(int r) {
+    fprintf(Outfile, "\tmvn\t%s, %s\n", reglist[r], reglist[r]);
+    return (r);
+}
+
+int cglognot(int r) {
+    fprintf(Outfile, "\ttst\t%s, %s\n", reglist[r], reglist[r]);
+    fprintf(Outfile, "\tmoveq\t%s, #1\n", reglist[r]);
+    fprintf(Outfile, "\tmovne\t%s, #0\n", reglist[r]);
+    return (r);
+}
+
+int cgboolean(int r, int op, int label) {
+    fprintf(Outfile, "\ttst\t%s, %s\n", reglist[r], reglist[r]);
+    if (op == A_IF || op == A_WHILE)
+        fprintf(Outfile, "\tbne\tL%d\n", label);
+    else {
+        fprintf(Outfile, "\tmovne\t%s, #1\n", reglist[r]);
+        fprintf(Outfile, "\tmoveq\t%s, #0\n", reglist[r]);
+    }
+    return (r);
 }
 
 // Call printint() with the given register
@@ -413,7 +517,7 @@ int cgstorderef(int r1, int r2, int type) {
       fprintf(Outfile, "\tstr\t%s, [%s]\n", reglist[r1], reglist[r2]);
       break;
     default:
-      fatald("Can't cgstoderef on type:", type);
+      fatald("Can't cgstorederef on type:", type);
   }
   return (r1);
 }
